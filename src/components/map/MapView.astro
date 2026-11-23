@@ -372,9 +372,16 @@ const showToggle = Boolean(copy.listToggleHref && copy.listToggleLabel && copy.m
 
 <script>
   import { initMapExplorer } from '~/scripts/map-explorer';
+  import { onPageLoad } from '~/utils/page-load';
 
-  document.querySelectorAll<HTMLElement>('[data-map-root]').forEach((root) => initMapExplorer(root));
+  onPageLoad(() => {
+    document.querySelectorAll<HTMLElement>('[data-map-root]').forEach((root) => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = '1';
+      initMapExplorer(root);
+    });
 
-  // The listings are drawn: take the loader away.
-  window.requestAnimationFrame(() => document.querySelector('[data-map-loader]')?.remove());
+    // The listings are drawn: take the loader away.
+    window.requestAnimationFrame(() => document.querySelector('[data-map-loader]')?.remove());
+  });
 </script>

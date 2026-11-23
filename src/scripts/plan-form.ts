@@ -4,7 +4,7 @@
  * moves them around. Text from the server is always set as text, never as HTML.
  */
 // A module, so its names stay out of the global scope shared with the other page scripts.
-export {};
+import { onPageLoad } from '~/utils/page-load';
 
 interface Stop {
   time: string;
@@ -31,26 +31,12 @@ interface Result {
   stops: Stop[];
 }
 
-const root = document.querySelector<HTMLElement>('[data-plan]');
-const form = root?.querySelector<HTMLFormElement>('[data-plan-form]');
-const message = root?.querySelector<HTMLElement>('[data-plan-message]');
-const submit = root?.querySelector<HTMLButtonElement>('[data-plan-submit]');
-const submitLabel = root?.querySelector<HTMLElement>('[data-plan-submit-label]');
-const section = root?.querySelector<HTMLElement>('[data-plan-result]');
-const template = root?.querySelector<HTMLTemplateElement>('template[data-plan-stop]');
-
 /** Weekday key for today in Hawaiʻi, matching the values of the Day select. */
 function hawaiiWeekday(): string {
   return new Intl.DateTimeFormat('en-US', { timeZone: 'Pacific/Honolulu', weekday: 'short' })
     .format(new Date())
     .slice(0, 3)
     .toLowerCase();
-}
-
-function show(text: string) {
-  if (!message) return;
-  message.textContent = text;
-  message.classList.toggle('hidden', !text);
 }
 
 function setText(scope: ParentNode, field: string, value: string) {
@@ -71,86 +57,101 @@ function safeHref(href: string, sameSiteOnly: boolean): string {
   return /^https:\/\//.test(href) ? href : '#';
 }
 
-function renderStop(stop: Stop): DocumentFragment | undefined {
-  if (!template || !root) return undefined;
-  const fragment = template.content.cloneNode(true) as DocumentFragment;
+function bind(root: HTMLElement) {
+  const form = root.querySelector<HTMLFormElement>('[data-plan-form]');
+  const message = root.querySelector<HTMLElement>('[data-plan-message]');
+  const submit = root.querySelector<HTMLButtonElement>('[data-plan-submit]');
+  const submitLabel = root.querySelector<HTMLElement>('[data-plan-submit-label]');
+  const section = root.querySelector<HTMLElement>('[data-plan-result]');
+  const template = root.querySelector<HTMLTemplateElement>('template[data-plan-stop]');
+  if (!form || !submit || !submitLabel) return;
+  root.dataset.ready = '1';
 
-  setText(fragment, 'time', stop.time);
-  setText(fragment, 'label', stop.label);
-  setText(fragment, 'name', stop.name);
-  setText(fragment, 'meta', stop.meta);
-  setText(fragment, 'price', stop.price);
-  setHidden(fragment, 'priceDot', !(stop.meta && stop.price));
-
-  const photo = fragment.querySelector<HTMLImageElement>('img[data-f="photo"]');
-  if (photo) photo.src = stop.photo || root.dataset.placeholder || '';
-
-  const status = setHidden(fragment, 'status', !stop.statusLabel);
-  if (status && stop.statusLabel) {
-    setText(status, 'statusText', stop.statusLabel);
-    const dot = status.querySelector<HTMLImageElement>('img[data-f="statusDot"]');
-    if (dot) dot.src = (stop.open ? root.dataset.dotOpen : root.dataset.dotClosed) ?? '';
+  function show(text: string) {
+    if (!message) return;
+    message.textContent = text;
+    message.classList.toggle('hidden', !text);
   }
 
-  const owner = setHidden(fragment, 'owner', !(stop.ownership === 'local' && stop.ownershipLabel));
-  if (owner) setText(owner, 'ownerText', stop.ownershipLabel);
+  function renderStop(stop: Stop): DocumentFragment | undefined {
+    if (!template || !root) return undefined;
+    const fragment = template.content.cloneNode(true) as DocumentFragment;
 
-  setHidden(fragment, 'whyBox', !stop.why);
-  setText(fragment, 'why', stop.why);
+    setText(fragment, 'time', stop.time);
+    setText(fragment, 'label', stop.label);
+    setText(fragment, 'name', stop.name);
+    setText(fragment, 'meta', stop.meta);
+    setText(fragment, 'price', stop.price);
+    setHidden(fragment, 'priceDot', !(stop.meta && stop.price));
 
-  fragment.querySelector<HTMLAnchorElement>('a[data-f="view"]')?.setAttribute('href', safeHref(stop.href, true));
-  fragment
-    .querySelector<HTMLAnchorElement>('a[data-f="directions"]')
-    ?.setAttribute('href', safeHref(stop.directionsUrl, false));
+    const photo = fragment.querySelector<HTMLImageElement>('img[data-f="photo"]');
+    if (photo) photo.src = stop.photo || root.dataset.placeholder || '';
 
-  const distance = setHidden(fragment, 'distance', !stop.distance);
-  if (distance) setText(distance, 'distanceText', stop.distance);
-
-  return fragment;
-}
-
-function render(result: Result) {
-  if (!section) return;
-  const part = (name: string) => section.querySelector<HTMLElement>(`[data-r="${name}"]`);
-
-  const title = part('title');
-  if (title) title.textContent = result.title;
-  const note = part('note');
-  if (note) {
-    note.textContent = result.note;
-    note.hidden = !result.note;
-  }
-
-  const summary = part('summary');
-  if (summary) {
-    summary.hidden = !result.summary;
-    const text = summary.querySelector('[data-r="summaryText"]');
-    if (text) text.textContent = result.summary;
-  }
-  const basic = part('basic');
-  if (basic) {
-    basic.textContent = result.basicNote;
-    basic.hidden = !result.basicNote;
-  }
-
-  const list = part('list');
-  if (list) {
-    list.replaceChildren();
-    for (const stop of result.stops) {
-      const item = renderStop(stop);
-      if (item) list.append(item);
+    const status = setHidden(fragment, 'status', !stop.statusLabel);
+    if (status && stop.statusLabel) {
+      setText(status, 'statusText', stop.statusLabel);
+      const dot = status.querySelector<HTMLImageElement>('img[data-f="statusDot"]');
+      if (dot) dot.src = (stop.open ? root.dataset.dotOpen : root.dataset.dotClosed) ?? '';
     }
-    list.hidden = result.stops.length === 0;
+
+    const owner = setHidden(fragment, 'owner', !(stop.ownership === 'local' && stop.ownershipLabel));
+    if (owner) setText(owner, 'ownerText', stop.ownershipLabel);
+
+    setHidden(fragment, 'whyBox', !stop.why);
+    setText(fragment, 'why', stop.why);
+
+    fragment.querySelector<HTMLAnchorElement>('a[data-f="view"]')?.setAttribute('href', safeHref(stop.href, true));
+    fragment
+      .querySelector<HTMLAnchorElement>('a[data-f="directions"]')
+      ?.setAttribute('href', safeHref(stop.directionsUrl, false));
+
+    const distance = setHidden(fragment, 'distance', !stop.distance);
+    if (distance) setText(distance, 'distanceText', stop.distance);
+
+    return fragment;
   }
-  const empty = part('empty');
-  if (empty) empty.hidden = result.stops.length > 0;
 
-  section.hidden = false;
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  section.focus({ preventScroll: true });
-}
+  function render(result: Result) {
+    if (!section) return;
+    const part = (name: string) => section.querySelector<HTMLElement>(`[data-r="${name}"]`);
 
-if (root && form && submit && submitLabel) {
+    const title = part('title');
+    if (title) title.textContent = result.title;
+    const note = part('note');
+    if (note) {
+      note.textContent = result.note;
+      note.hidden = !result.note;
+    }
+
+    const summary = part('summary');
+    if (summary) {
+      summary.hidden = !result.summary;
+      const text = summary.querySelector('[data-r="summaryText"]');
+      if (text) text.textContent = result.summary;
+    }
+    const basic = part('basic');
+    if (basic) {
+      basic.textContent = result.basicNote;
+      basic.hidden = !result.basicNote;
+    }
+
+    const list = part('list');
+    if (list) {
+      list.replaceChildren();
+      for (const stop of result.stops) {
+        const item = renderStop(stop);
+        if (item) list.append(item);
+      }
+      list.hidden = result.stops.length === 0;
+    }
+    const empty = part('empty');
+    if (empty) empty.hidden = result.stops.length > 0;
+
+    section.hidden = false;
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    section.focus({ preventScroll: true });
+  }
+
   const idleLabel = submitLabel.textContent ?? '';
 
   // The page may be served from a short cache, so settle "today" in the browser.
@@ -216,3 +217,9 @@ if (root && form && submit && submitLabel) {
     submitLabel.textContent = idleLabel;
   });
 }
+
+onPageLoad(() =>
+  document.querySelectorAll<HTMLElement>('[data-plan]').forEach((root) => {
+    if (!root.dataset.ready) bind(root);
+  })
+);

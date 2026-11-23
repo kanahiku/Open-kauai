@@ -87,13 +87,13 @@ export const HOME_PAGE_QUERY = `*[_id == "homePage"][0] {
   }
 }`;
 
-/** Per section: how many listings there are and the four to show on the shelf. */
+/** Per section: how many listings there are and a pool to pick the shelf from (see `pickVaried`). */
 export const SECTION_LISTINGS_QUERY = `{
 ${SECTION_KEYS.map(
   (key) => `  "${key}": {
     "count": count(*[_type == "business" && listed != false && category->section == "${key}"]),
     "shelf": *[_type == "business" && listed != false && category->section == "${key}"]
-      | order(featured desc, name asc) [0...4] ${BUSINESS_CARD}
+      | order(featured desc, name asc) [0...30] ${BUSINESS_CARD}
   }`
 ).join(',\n')}
 }`;

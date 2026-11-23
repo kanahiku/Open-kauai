@@ -302,6 +302,13 @@ const groupTitle = 'font-display text-[13px] leading-4 tracking-[1.6px] text-tea
 
 <script>
   import { initSectionList } from '~/scripts/section-filter';
+  import { onPageLoad } from '~/utils/page-load';
 
-  document.querySelectorAll<HTMLElement>('[data-section-list]').forEach(initSectionList);
+  onPageLoad(() =>
+    document.querySelectorAll<HTMLElement>('[data-section-list]').forEach((root) => {
+      if (root.dataset.ready) return;
+      root.dataset.ready = '1';
+      initSectionList(root);
+    })
+  );
 </script>

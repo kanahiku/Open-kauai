@@ -45,18 +45,13 @@ const { hero } = Astro.props;
         hero.tabs.map((tab) => (
           <a
             href={tab.href}
-            class="flex w-[82px] flex-col items-center gap-2 px-3 font-sans text-[14px] leading-5 font-semibold"
+            class="group flex w-[82px] flex-col items-center gap-2 px-3 font-sans text-[14px] leading-5 font-semibold"
           >
-            <span
-              class:list={[
-                'flex items-center justify-center rounded-pill p-4',
-                tab.active ? 'border border-sky bg-teal shadow-[0_0_10px_rgba(255,255,255,0.15)]' : 'bg-teal-wash',
-              ]}
-            >
+            <span class="flex items-center justify-center rounded-pill border border-transparent bg-teal-wash p-4 transition-colors group-hover:border-sky group-hover:bg-teal group-hover:shadow-[0_0_10px_rgba(255,255,255,0.15)] group-focus-visible:border-sky group-focus-visible:bg-teal">
               <img
                 src={assetUrl(tab.icon)}
                 alt=""
-                class={['size-[26px]', tab.active ? 'brightness-0 invert' : ''].join(' ')}
+                class="size-[26px] transition-[filter] group-hover:brightness-0 group-hover:invert group-focus-visible:brightness-0 group-focus-visible:invert"
               />
             </span>
             {tab.label}

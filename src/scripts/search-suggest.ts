@@ -1,3 +1,5 @@
+import { onPageLoad } from '~/utils/page-load';
+
 /**
  * Suggestions under any search box marked `data-search-suggest`: places and businesses as you type,
  * from /api/search.json. Arrow keys move through the list, Enter opens the highlighted row or
@@ -31,6 +33,8 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
 }
 
 function attach(form: HTMLFormElement) {
+  if (form.dataset.suggest) return;
+  form.dataset.suggest = '1';
   const input = form.querySelector<HTMLInputElement>('input[name="q"]');
   if (!input) return;
 
@@ -169,4 +173,4 @@ function attach(form: HTMLFormElement) {
   form.addEventListener('submit', close);
 }
 
-document.querySelectorAll<HTMLFormElement>('form[data-search-suggest]').forEach(attach);
+onPageLoad(() => document.querySelectorAll<HTMLFormElement>('form[data-search-suggest]').forEach(attach));

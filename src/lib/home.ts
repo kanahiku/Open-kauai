@@ -179,6 +179,27 @@ export function toCard(business: RawBusiness, now: Date): ListingCardData | unde
 
 const POPOVER = { width: 300, height: 96, gap: 10, margin: 8 } as const;
 
+const SHELF_SIZE = 4;
+
+/**
+ * The first `limit` cards, taking ones with a photo not yet used before any repeat, so a shelf never
+ * shows the same picture twice while the directory has other photos to offer.
+ */
+function pickVaried(cards: ListingCardData[], limit: number): ListingCardData[] {
+  const seen = new Set<string>();
+  const fresh: ListingCardData[] = [];
+  const repeats: ListingCardData[] = [];
+  for (const card of cards) {
+    if (card.photo && !seen.has(card.photo)) {
+      seen.add(card.photo);
+      fresh.push(card);
+    } else {
+      repeats.push(card);
+    }
+  }
+  return [...fresh, ...repeats].slice(0, limit);
+}
+
 function buildMadeHere(page: RawHomePage, now: Date): MadeHereData | undefined {
   const rows = (page.madeHereBusinesses ?? [])
     .filter((b): b is RawBusiness => Boolean(b?.name && b.slug))
@@ -271,9 +292,12 @@ export function buildHomeContent(page: RawHomePage, listings: RawListings, now: 
 
   const shelves: ShelfData[] = [];
   for (const s of sections) {
-    const items = (listings[s.section]?.shelf ?? [])
-      .map((business) => toCard(business, now))
-      .filter((card): card is ListingCardData => card !== undefined);
+    const items = pickVaried(
+      (listings[s.section]?.shelf ?? [])
+        .map((business) => toCard(business, now))
+        .filter((card): card is ListingCardData => card !== undefined),
+      SHELF_SIZE
+    );
     if (items.length === 0) continue;
     shelves.push({
       id: s.section,

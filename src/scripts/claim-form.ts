@@ -1,20 +1,22 @@
+import { onPageLoad } from '~/utils/page-load';
+
 /**
  * Sends the claim form to /api/claims without leaving the page. Messages come from data attributes
  * the server rendered from Sanity, so nothing is written here.
  */
-const root = document.querySelector<HTMLElement>('[data-claim]');
-const form = root?.querySelector<HTMLFormElement>('[data-claim-form]');
-const done = root?.querySelector<HTMLElement>('[data-claim-done]');
-const message = root?.querySelector<HTMLElement>('[data-claim-message]');
-const submit = root?.querySelector<HTMLButtonElement>('[data-claim-submit]');
+function bind(root: HTMLElement) {
+  const form = root.querySelector<HTMLFormElement>('[data-claim-form]');
+  const done = root.querySelector<HTMLElement>('[data-claim-done]');
+  const message = root.querySelector<HTMLElement>('[data-claim-message]');
+  const submit = root.querySelector<HTMLButtonElement>('[data-claim-submit]');
+  if (!form || !done || !submit) return;
+  root.dataset.ready = '1';
 
-function show(text: string) {
-  if (!message) return;
-  message.textContent = text;
-  message.classList.toggle('hidden', !text);
-}
-
-if (root && form && done && submit) {
+  const show = (text: string) => {
+    if (!message) return;
+    message.textContent = text;
+    message.classList.toggle('hidden', !text);
+  };
   const idleLabel = submit.textContent ?? '';
 
   form.addEventListener('submit', async (event) => {
@@ -64,3 +66,9 @@ if (root && form && done && submit) {
     submit.textContent = idleLabel;
   });
 }
+
+onPageLoad(() =>
+  document.querySelectorAll<HTMLElement>('[data-claim]').forEach((root) => {
+    if (!root.dataset.ready) bind(root);
+  })
+);
