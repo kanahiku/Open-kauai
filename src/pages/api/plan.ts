@@ -1,5 +1,5 @@
 /**
- * POST /api/plan: builds a day from the choices on the Plan with AI page and returns it as JSON for
+ * GET /api/plan: builds a day from the choices on the Plan with AI page and returns it as JSON for
  * the page to show. Choices are checked against the `planPage` document; stops are real listings.
  */
 import type { APIRoute } from 'astro';
@@ -30,7 +30,19 @@ function limited(key: string, now: number): boolean {
   return recent.length > MAX_PER_WINDOW;
 }
 
-export const POST: APIRoute = async ({ request, url, clientAddress }) => {
+/** The choices come in the query string (GET), so the request has no body to be redirected. */
+function fromQuery(params: URLSearchParams): Record<string, unknown> {
+  return {
+    region: params.get('region') ?? '',
+    day: params.get('day') ?? '',
+    time: params.get('time') ?? '',
+    budget: params.get('budget') ?? '',
+    interests: params.getAll('interests'),
+    note: params.get('note') ?? '',
+  };
+}
+
+export const GET: APIRoute = async ({ request, url, clientAddress }) => {
   // Same-origin only.
   const origin = request.headers.get('origin');
   if (origin) {
@@ -41,15 +53,8 @@ export const POST: APIRoute = async ({ request, url, clientAddress }) => {
     }
   }
 
-  const length = Number(request.headers.get('content-length') ?? 0);
-  if (length > 5_000) return json(413, { ok: false });
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return json(400, { ok: false });
-  }
+  if (url.search.length > 2_000) return json(414, { ok: false });
+  const body = fromQuery(url.searchParams);
 
   try {
     const [copy, regions, settings] = await Promise.all([loadPlanCopy(), loadPlanRegions(), getSiteSettings()]);

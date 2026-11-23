@@ -177,25 +177,20 @@ function bind(root: HTMLElement) {
       return;
     }
 
+    // A GET with the choices in the query string: no request body, so nothing for a redirect to break.
     const data = new FormData(form);
-    const body = {
-      region: data.get('region'),
-      day: data.get('day'),
-      time: data.get('time'),
-      budget: data.get('budget'),
-      interests: data.getAll('interests'),
-      note: data.get('note'),
-    };
+    const params = new URLSearchParams();
+    for (const key of ['region', 'day', 'time', 'budget', 'note']) params.set(key, String(data.get(key) ?? ''));
+    for (const value of data.getAll('interests')) params.append('interests', String(value));
 
     submit.disabled = true;
     form.setAttribute('aria-busy', 'true');
     if (root.dataset.building) submitLabel.textContent = root.dataset.building;
 
     try {
-      const response = await fetch('/api/plan/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+      const response = await fetch(`/api/plan/?${params.toString()}`, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
       });
       if (response.status === 400) {
         show(root.dataset.invalid ?? '');
