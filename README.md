@@ -48,16 +48,17 @@ Pages are server-rendered with a short CDN cache, so open/closed status and the 
 
 ## Scripts
 
-| Command                   | What it does                                                                                                                                                                                           |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `npm run scrape`          | Fetch listings from openkauai.org into `.cache/openkauai/`                                                                                                                                             |
-| `npm run import:listings` | Write categories, areas and businesses to Sanity (`-- --dry-run` to preview). Idempotent. Never overwrites fields editors set (photo, kind, ownership, price, known-for, description, featured, slug). |
-| `npm run seed:site`       | Seed `siteSettings` and `homePage`                                                                                                                                                                     |
-| `npm run seed:map`        | Seed `mapPage` (`-- --force` to replace)                                                                                                                                                               |
-| `npm run seed:directory`  | Seed the section pages, business page copy and listing labels (`-- --force` to replace)                                                                                                                |
-| `npm run seed:pages`      | Seed About, Owners, For businesses, Region and Search copy, the five regions and footer links (`-- --force` replaces the page copy)                                                                    |
-| `npm run check`           | astro check, eslint, prettier                                                                                                                                                                          |
-| `npm run build`           | Production build                                                                                                                                                                                       |
+| Command                   | What it does                                                                                                                                                                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run scrape`          | Fetch listings from openkauai.org into `.cache/openkauai/`                                                                                                                                                                          |
+| `npm run import:listings` | Write categories, areas and businesses to Sanity (`-- --dry-run` to preview). Idempotent. Never overwrites fields editors set (photo, kind, ownership, price, known-for, description, featured, slug).                              |
+| `npm run seed:site`       | Seed `siteSettings` and `homePage`                                                                                                                                                                                                  |
+| `npm run seed:map`        | Seed `mapPage` (`-- --force` to replace)                                                                                                                                                                                            |
+| `npm run seed:plan`       | Seed the Plan with AI page (`/plan/`) and the header "Ask AI" button (`-- --force` replaces the page copy). Set `AI_API_KEY` and `AI_MODEL` (see `.env.example`) for AI picks; without them the page builds the day without the AI. |
+| `npm run seed:directory`  | Seed the section pages, business page copy and listing labels (`-- --force` to replace)                                                                                                                                             |
+| `npm run seed:pages`      | Seed About, Owners, For businesses, Region and Search copy, the five regions and footer links (`-- --force` replaces the page copy)                                                                                                 |
+| `npm run check`           | astro check, eslint, prettier                                                                                                                                                                                                       |
+| `npm run build`           | Production build                                                                                                                                                                                                                    |
 
 Every script that writes to Sanity refuses to run unless `SANITY_PROJECT_ID` is `i1q8kcrm`.
 

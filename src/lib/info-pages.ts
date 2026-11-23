@@ -137,7 +137,13 @@ interface RawStory {
   businessLine?: string;
   since?: number;
   photo?: SanityImageFields | null;
-  business?: { name?: string; slug?: string; area?: string; listed?: boolean } | null;
+  business?: {
+    name?: string;
+    slug?: string;
+    area?: string;
+    listed?: boolean;
+    photo?: SanityImageFields | null;
+  } | null;
 }
 
 export interface OwnerStoryCard {
@@ -173,7 +179,8 @@ export function buildOwnersPage(raw: RawOwners, stories: RawStory[]): OwnersPage
         quote: story.quote!,
         ownerName: story.ownerName!,
         line: [place, since].filter(Boolean).join(' · '),
-        photo: imageUrl(story.photo, 640, 320),
+        // The owner's own photo first, then the photo of their listing. Empty when there is neither.
+        photo: imageUrl(story.photo, 640, 320) || imageUrl(business?.photo, 640, 320),
         href: business?.slug ? `/business/${business.slug}/` : '',
       };
     });

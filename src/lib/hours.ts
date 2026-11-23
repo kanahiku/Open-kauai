@@ -12,7 +12,7 @@ export const HOURS_CONFIRM_WINDOW_DAYS = 90;
 
 export type Weekday = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
-const WEEKDAYS: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+export const WEEKDAYS: Weekday[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const DAY_NAMES: Record<Weekday, string> = {
   mon: 'Mon',
   tue: 'Tue',
@@ -100,7 +100,7 @@ export function formatMonthDay(date: string): string {
   return `${MONTHS[month - 1] ?? ''} ${day}`.trim();
 }
 
-function isConfirmedRecently(confirmedAt: string | null | undefined, now: Date): boolean {
+export function isConfirmedRecently(confirmedAt: string | null | undefined, now: Date): boolean {
   if (!confirmedAt) return false;
   const confirmed = Date.parse(confirmedAt);
   if (Number.isNaN(confirmed)) return false;
@@ -127,6 +127,21 @@ function validWindows(windows: OpeningWindow[] | null | undefined): ValidWindow[
     result.push({ days, opens, closes, opensText: window.opens!, closesText: window.closes! });
   }
   return result.sort((a, b) => a.opens - b.opens);
+}
+
+/** Usable opening windows for one weekday, in minutes since midnight, earliest first. */
+export function windowsOnDay(
+  windows: OpeningWindow[] | null | undefined,
+  weekday: Weekday
+): { opens: number; closes: number }[] {
+  return validWindows(windows)
+    .filter((window) => window.days.includes(weekday))
+    .map(({ opens, closes }) => ({ opens, closes }));
+}
+
+/** True when the listing has at least one usable weekly window on some day. */
+export function hasWeeklyHours(windows: OpeningWindow[] | null | undefined): boolean {
+  return validWindows(windows).length > 0;
 }
 
 /**

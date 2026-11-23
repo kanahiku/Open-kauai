@@ -10,6 +10,9 @@ interface ImportMetaEnv {
   readonly SANITY_DATASET?: string;
   readonly SANITY_API_TOKEN?: string;
   readonly SANITY_WRITE_TOKEN?: string;
+  readonly AI_API_KEY?: string;
+  readonly AI_MODEL?: string;
+  readonly AI_BASE_URL?: string;
   readonly ISR_BYPASS_TOKEN?: string;
   readonly SANITY_REVALIDATE_SECRET?: string;
 }

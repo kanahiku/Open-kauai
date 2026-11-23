@@ -31,6 +31,7 @@ export const SITE_SETTINGS_QUERY = `*[_id == "siteSettings"][0] {
   description,
   headerLinks[] { label, href },
   headerAction { label, href },
+  askAction { label, href },
   menuLabel,
   footerTagline,
   officialInfo { label, linkText, url },
@@ -285,7 +286,7 @@ export const OWNER_STORIES_QUERY = `*[_type == "ownerStory"] | order(order asc, 
   businessLine,
   since,
   photo ${IMAGE},
-  "business": business->{ name, "slug": slug.current, "area": area->title, listed }
+  "business": business->{ name, "slug": slug.current, "area": area->title, listed, photo ${IMAGE} }
 }`;
 
 export const FOR_BUSINESSES_QUERY = `*[_id == "forBusinessesPage"][0]{
@@ -370,6 +371,64 @@ export const REGION_BUSINESSES_QUERY = `*[_type == "business" && listed != false
   "section": category->section,
   "lat": location.lat,
   "lng": location.lng
+}`;
+
+// ---------- Plan with AI ----------
+export const PLAN_PAGE_QUERY = `*[_id == "planPage"][0]{
+  seoTitle,
+  seoDescription,
+  eyebrow,
+  title,
+  lede,
+  regionLabel,
+  anyRegionLabel,
+  dayLabel,
+  todaySuffix,
+  timeLabel,
+  budgetLabel,
+  interestsLabel,
+  askLabel,
+  askPlaceholder,
+  submitLabel,
+  buildingLabel,
+  invalidMessage,
+  errorMessage,
+  limitMessage,
+  "timeOptions": timeOptions[]{ _key, label, startTime, hours, stops },
+  "budgetOptions": budgetOptions[]{ _key, label, maxLevel },
+  "interests": interests[]{ _key, label, "categoryIds": categories[]->_id },
+  resultTitleTemplate,
+  resultAllRegionTitleTemplate,
+  resultNote,
+  stopLabelTemplate,
+  minutesTemplate,
+  hoursTemplate,
+  whyLabel,
+  viewListingLabel,
+  directionsLabel,
+  distanceTemplate,
+  openAtTimeLabel,
+  byBookingLabel,
+  unconfirmedLabel,
+  summaryLabel,
+  basicNote,
+  emptyTitle,
+  emptyBody,
+  travelBufferMinutes,
+  howTitle,
+  howPoints
+}`;
+
+/** Every listed business with a point on the map in a set of towns, with what the planner needs. */
+export const PLAN_BUSINESSES_QUERY = `*[_type == "business" && listed != false && defined(location.lat) && defined(location.lng)
+  && ($all || area._ref in $areaIds)] | order(name asc){
+  ${BUSINESS_FIELDS},
+  featured,
+  "lat": location.lat,
+  "lng": location.lng,
+  "section": category->section,
+  "categoryId": category->_id,
+  "categoryTitle": category->title
 }`;
 
 // ---------- Search ----------

@@ -12,6 +12,10 @@ export const structure = (S: StructureBuilder) =>
       S.listItem().title('Home page').id('homePage').child(S.document().schemaType('homePage').documentId('homePage')),
       S.listItem().title('Map page').id('mapPage').child(S.document().schemaType('mapPage').documentId('mapPage')),
       S.listItem()
+        .title('Plan with AI page')
+        .id('planPage')
+        .child(S.document().schemaType('planPage').documentId('planPage')),
+      S.listItem()
         .title('Business page copy')
         .id('businessPage')
         .child(S.document().schemaType('businessPage').documentId('businessPage')),

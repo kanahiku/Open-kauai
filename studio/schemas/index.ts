@@ -1,6 +1,6 @@
 /**
  * Open Kauaʻi Sanity schema.
- * Singletons: siteSettings, homePage, mapPage, businessPage, aboutPage, ownersPage, forBusinessesPage, regionPage,
+ * Singletons: siteSettings, homePage, mapPage, planPage, businessPage, aboutPage, ownersPage, forBusinessesPage, regionPage,
  * searchPage. Documents: sectionPage (one per section), business, category, area, region, ownerStory,
  * claimRequest, guide.
  * Object: openingHours. Add new types here and list them in `schemaTypes`.
@@ -16,6 +16,7 @@ import { guide } from './documents/guide';
 import { homePage } from './documents/homePage';
 import { mapPage } from './documents/mapPage';
 import { ownersPage } from './documents/ownersPage';
+import { planPage } from './documents/planPage';
 import { ownerStory } from './documents/ownerStory';
 import { region } from './documents/region';
 import { regionPage } from './documents/regionPage';
@@ -28,6 +29,7 @@ export const schemaTypes = [
   siteSettings,
   homePage,
   mapPage,
+  planPage,
   businessPage,
   aboutPage,
   ownersPage,

@@ -58,6 +58,17 @@ export const siteSettings = defineType({
         defineField({ name: 'href', title: 'Link', type: 'string' }),
       ],
     }),
+    defineField({
+      name: 'askAction',
+      title: 'Ask Kauaʻi button',
+      type: 'object',
+      group: 'navigation',
+      description: 'The button in the header that opens the Plan with AI page. Leave the label empty to hide it.',
+      fields: [
+        defineField({ name: 'label', title: 'Label', type: 'string' }),
+        defineField({ name: 'href', title: 'Link', type: 'string' }),
+      ],
+    }),
     defineField({ name: 'menuLabel', title: 'Mobile menu button label', type: 'string', group: 'navigation' }),
 
     defineField({ name: 'footerTagline', title: 'Footer tagline', type: 'string', group: 'footer' }),

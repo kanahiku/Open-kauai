@@ -1,0 +1,63 @@
+---
+/**
+ * /plan/: "Plan with AI". A short form (region, day, time, budget, interests and one free-text
+ * question for the AI) and the day it builds, shown on this page. Copy, choices and regions come from
+ * Sanity; the day is built by /api/plan/ from real listings.
+ */
+import PageLayout from '~/layouts/PageLayout.astro';
+import PlanForm from '~/components/pages/PlanForm.astro';
+import SparkleIcon from '~/components/common/SparkleIcon.astro';
+import { loadPlanCopy, loadPlanRegions } from '~/lib/plan-page';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const [copy, regions] = await Promise.all([loadPlanCopy(), loadPlanRegions()]);
+const points = (copy.howPoints ?? []).filter(Boolean);
+---
+
+<PageLayout metadata={{ title: copy.seoTitle ?? copy.title, description: copy.seoDescription }}>
+  <section class="site-frame flex flex-col gap-3 pt-10 pb-8 lg:pt-14">
+    {
+      copy.eyebrow && (
+        <p class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">{copy.eyebrow}</p>
+      )
+    }
+    <h1
+      class="font-display text-[38px] leading-[44px] tracking-[-0.5px] text-teal-deep lg:text-[52px] lg:leading-[56px]"
+    >
+      {copy.title}
+    </h1>
+    {
+      copy.lede && (
+        <p class="max-w-[640px] font-serif text-lg leading-7 text-muted lg:text-[20px] lg:leading-[30px]">
+          {copy.lede}
+        </p>
+      )
+    }
+  </section>
+
+  <section class="site-frame grid items-start gap-8 pb-16 lg:grid-cols-[minmax(0,1fr)_320px] lg:pb-24">
+    <PlanForm copy={copy} regions={regions} />
+
+    {
+      points.length > 0 && (
+        <aside class="flex flex-col gap-4 rounded-card bg-tint p-6 lg:sticky lg:top-6" aria-labelledby="how-title">
+          {copy.howTitle && (
+            <h2 id="how-title" class="flex items-center gap-2 font-display text-[20px] leading-7 text-teal-deep">
+              <SparkleIcon class="size-[18px] text-teal" />
+              {copy.howTitle}
+            </h2>
+          )}
+          <ul class="flex flex-col gap-3">
+            {points.map((point) => (
+              <li class="flex items-start gap-2.5 font-serif text-[16px] leading-[24px] text-ink">
+                <span aria-hidden="true" class="mt-2.5 size-1.5 shrink-0 rounded-pill bg-teal" />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
+  </section>
+</PageLayout>

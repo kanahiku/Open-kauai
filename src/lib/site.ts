@@ -20,6 +20,8 @@ export interface SiteSettings {
   description: string;
   headerLinks?: NavLink[];
   headerAction?: Partial<NavLink>;
+  /** "Ask AI" button: opens the Plan with AI page. */
+  askAction?: Partial<NavLink>;
   menuLabel?: string;
   footerTagline?: string;
   officialInfo?: { label?: string; linkText?: string; url?: string };

@@ -1,0 +1,277 @@
+---
+/**
+ * The Plan with AI form and the place its result appears. Every label comes from the `planPage`
+ * document in Sanity. `scripts/plan-form.ts` sends the form to /api/plan/ and fills the result
+ * in on this page, from the `<template>` below, so nothing here is written by hand per day.
+ */
+import SelectField from '~/components/common/SelectField.astro';
+import SparkleIcon from '~/components/common/SparkleIcon.astro';
+import { assetUrl } from '~/utils/assets';
+import { dayOptions, type PlanCopy, type PlanRegion } from '~/lib/plan-page';
+import { ALL_REGIONS } from '~/lib/plan';
+import { hawaiiNow } from '~/lib/hours';
+import placeholderPhoto from '~/assets/images/placeholder/business.jpg';
+import dotOpen from '~/assets/brand/dot-open.svg';
+import dotClosed from '~/assets/brand/dot-closed.svg';
+import leaf from '~/assets/brand/leaf.svg';
+import mapPin from '~/assets/icons/map-pin.svg';
+import navigationArrow from '~/assets/icons/navigation-arrow.svg';
+import arrowRight from '~/assets/icons/arrow-right.svg';
+
+interface Props {
+  copy: PlanCopy;
+  regions: PlanRegion[];
+}
+
+const { copy, regions } = Astro.props;
+const today = hawaiiNow(new Date()).weekday;
+
+const label = 'font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase';
+const control =
+  'w-full rounded-xl border border-line bg-white px-4 py-3 font-serif text-[17px] leading-6 text-ink placeholder:text-muted/70 focus:border-teal focus:outline-2 focus:outline-offset-2 focus:outline-sky';
+const action =
+  'inline-flex h-10 items-center gap-2 rounded-pill border-[1.5px] px-4 font-sans text-[13px] leading-[18px] font-semibold whitespace-nowrap';
+---
+
+<div
+  data-plan
+  data-invalid={copy.invalidMessage ?? ''}
+  data-error={copy.errorMessage ?? ''}
+  data-limit={copy.limitMessage ?? ''}
+  data-building={copy.buildingLabel ?? ''}
+  data-today-suffix={copy.todaySuffix ?? ''}
+  data-placeholder={assetUrl(placeholderPhoto)}
+  data-dot-open={assetUrl(dotOpen)}
+  data-dot-closed={assetUrl(dotClosed)}
+  class="flex flex-col gap-10"
+>
+  <form
+    data-plan-form
+    novalidate
+    class="flex flex-col gap-6 rounded-card border border-line bg-white p-6 lg:p-8"
+    aria-busy="false"
+  >
+    <div class="grid gap-5 sm:grid-cols-2">
+      <label class="flex flex-col gap-2">
+        <span class={label}>{copy.regionLabel}</span>
+        <SelectField name="region" required class={control}>
+          {
+            regions.map((region, index) => (
+              <option value={region.slug} selected={index === 0}>
+                {region.title}
+              </option>
+            ))
+          }
+          {copy.anyRegionLabel && <option value={ALL_REGIONS}>{copy.anyRegionLabel}</option>}
+        </SelectField>
+      </label>
+
+      <label class="flex flex-col gap-2">
+        <span class={label}>{copy.dayLabel}</span>
+        <SelectField name="day" required class={control}>
+          {
+            dayOptions().map((day) => (
+              <option value={day.value} data-label={day.label} selected={day.value === today}>
+                {[day.label, day.value === today ? copy.todaySuffix : ''].filter(Boolean).join(' ')}
+              </option>
+            ))
+          }
+        </SelectField>
+      </label>
+
+      <label class="flex flex-col gap-2">
+        <span class={label}>{copy.timeLabel}</span>
+        <SelectField name="time" required class={control}>
+          {
+            (copy.timeOptions ?? []).map((option, index) => (
+              <option value={option._key} selected={index === 0}>
+                {option.label}
+              </option>
+            ))
+          }
+        </SelectField>
+      </label>
+
+      <label class="flex flex-col gap-2">
+        <span class={label}>{copy.budgetLabel}</span>
+        <SelectField name="budget" required class={control}>
+          {
+            (copy.budgetOptions ?? []).map((option, index) => (
+              <option value={option._key} selected={index === 0}>
+                {option.label}
+              </option>
+            ))
+          }
+        </SelectField>
+      </label>
+    </div>
+
+    {
+      (copy.interests ?? []).length > 0 && (
+        <fieldset class="flex flex-col gap-3">
+          <legend class={label}>{copy.interestsLabel}</legend>
+          <div class="flex flex-wrap gap-2.5">
+            {(copy.interests ?? []).map((interest) => (
+              <label class="cursor-pointer">
+                <input type="checkbox" name="interests" value={interest._key} class="peer sr-only" />
+                <span class="inline-flex rounded-pill border border-line bg-white px-3.5 py-2 font-sans text-[13px] leading-[18px] font-semibold text-ink transition-colors peer-checked:border-teal peer-checked:bg-teal-wash peer-checked:text-teal-deep peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-sky hover:border-teal">
+                  {interest.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )
+    }
+
+    <label class="flex flex-col gap-2">
+      <span class={`${label} flex items-center gap-2`}>
+        <SparkleIcon class="size-3.5" />
+        {copy.askLabel}
+      </span>
+      <textarea name="note" rows="3" maxlength="300" placeholder={copy.askPlaceholder} class={control}></textarea>
+    </label>
+
+    <p data-plan-message role="alert" class="hidden font-sans text-sm leading-5 text-[#9b2c2c]"></p>
+
+    <button
+      type="submit"
+      data-plan-submit
+      class="inline-flex w-fit items-center gap-2.5 rounded-pill bg-teal px-6 py-3.5 font-sans text-sm leading-5 font-semibold text-white hover:bg-teal-deep disabled:cursor-wait disabled:opacity-70"
+    >
+      <SparkleIcon class="size-[18px]" />
+      <span data-plan-submit-label>{copy.submitLabel}</span>
+    </button>
+  </form>
+
+  <section data-plan-result hidden tabindex="-1" aria-live="polite" class="flex flex-col gap-6 scroll-mt-6">
+    <div class="flex flex-col gap-2">
+      <h2
+        data-r="title"
+        class="font-display text-[30px] leading-[38px] text-teal-deep lg:text-[36px] lg:leading-[44px]"
+      >
+      </h2>
+      <p data-r="note" class="font-sans text-xs leading-4 text-muted"></p>
+    </div>
+
+    <div data-r="summary" hidden class="flex flex-col gap-1.5 rounded-card bg-teal-wash p-4">
+      {
+        copy.summaryLabel && (
+          <p class="flex items-center gap-2 font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">
+            <SparkleIcon class="size-3.5" />
+            {copy.summaryLabel}
+          </p>
+        )
+      }
+      <p data-r="summaryText" class="font-serif text-[17px] leading-[26px] text-ink"></p>
+    </div>
+
+    <p data-r="basic" hidden class="font-serif text-[15px] leading-[22px] text-muted italic"></p>
+
+    <ol data-r="list" class="flex flex-col"></ol>
+
+    <div data-r="empty" hidden class="flex flex-col gap-2 rounded-card bg-tint p-6">
+      {copy.emptyTitle && <h3 class="font-display text-[24px] leading-[30px] text-teal-deep">{copy.emptyTitle}</h3>}
+      {copy.emptyBody && <p class="font-serif text-[17px] leading-[26px] text-ink">{copy.emptyBody}</p>}
+    </div>
+  </section>
+
+  <template data-plan-stop>
+    <li class="group/stop grid gap-2 pb-6 sm:grid-cols-[92px_20px_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
+      <p data-f="time" class="font-display text-[22px] leading-7 whitespace-nowrap text-teal-deep sm:pt-0.5"></p>
+
+      <span aria-hidden="true" class="relative hidden justify-center sm:flex">
+        <span class="relative z-10 mt-2.5 size-2.5 rounded-pill bg-teal"></span>
+        <span class="absolute top-4 bottom-[-24px] w-px bg-line group-last/stop:hidden"></span>
+      </span>
+
+      <div class="flex min-w-0 flex-col gap-2">
+        <p data-f="distance" hidden class="flex items-center gap-1.5 font-sans text-xs leading-4 text-muted">
+          <img src={assetUrl(mapPin)} alt="" class="size-3.5" />
+          <span data-f="distanceText"></span>
+        </p>
+        <article class="flex flex-col overflow-hidden rounded-card border border-line bg-white shadow-card sm:flex-row">
+          <img
+            data-f="photo"
+            src={assetUrl(placeholderPhoto)}
+            alt=""
+            loading="lazy"
+            class="h-48 w-full shrink-0 bg-teal-wash object-cover sm:h-auto sm:w-[160px]"
+          />
+          <div class="flex min-w-0 flex-1 flex-col gap-3 p-4 lg:p-5">
+            <div class="flex flex-col gap-1">
+              <p data-f="label" class="font-display text-[12px] leading-4 tracking-[1.6px] text-teal uppercase"></p>
+              <h3 data-f="name" class="font-display text-[22px] leading-7 text-ink"></h3>
+              <p class="flex flex-wrap items-center gap-1.5 font-sans text-xs leading-4 text-muted">
+                <span data-f="meta"></span>
+                <span data-f="priceDot" aria-hidden="true" hidden>·</span>
+                <span data-f="price"></span>
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <span
+                data-f="status"
+                hidden
+                class="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-2.5 py-1 font-sans text-[13px] leading-[18px] text-ink"
+              >
+                <img data-f="statusDot" src={assetUrl(dotClosed)} alt="" class="size-2" />
+                <span data-f="statusText"></span>
+              </span>
+              <span
+                data-f="owner"
+                hidden
+                class="inline-flex items-center gap-1.5 rounded-pill bg-teal-wash px-2.5 py-1 font-sans text-[13px] leading-[18px] text-teal-deep"
+              >
+                <img src={assetUrl(leaf)} alt="" class="size-3.5" />
+                <span data-f="ownerText"></span>
+              </span>
+            </div>
+
+            <div data-f="whyBox" hidden class="flex flex-col gap-1 rounded-lg bg-sand-wash px-3.5 py-2.5">
+              {
+                copy.whyLabel && (
+                  <p class="font-display text-[12px] leading-4 tracking-[1.6px] text-sand uppercase">{copy.whyLabel}</p>
+                )
+              }
+              <p data-f="why" class="font-serif text-[15px] leading-[22px] text-ink"></p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              {
+                copy.viewListingLabel && (
+                  <a
+                    data-f="view"
+                    href="#"
+                    class={`${action} border-teal-deep text-teal-deep hover:bg-teal-deep hover:text-white`}
+                  >
+                    {copy.viewListingLabel}
+                    <img src={assetUrl(arrowRight)} alt="" class="size-3.5" />
+                  </a>
+                )
+              }
+              {
+                copy.directionsLabel && (
+                  <a
+                    data-f="directions"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class={`${action} border-line bg-white text-ink hover:border-teal`}
+                  >
+                    <img src={assetUrl(navigationArrow)} alt="" class="size-4" />
+                    {copy.directionsLabel}
+                  </a>
+                )
+              }
+            </div>
+          </div>
+        </article>
+      </div>
+    </li>
+  </template>
+</div>
+
+<script>
+  import '~/scripts/plan-form';
+</script>

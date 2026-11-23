@@ -9,6 +9,7 @@ export const prerender = false;
 const STATIC_PATHS = [
   '/',
   '/map/',
+  '/plan/',
   ...SECTION_KEYS.map((key) => `/${key}/`),
   '/about/',
   '/for-businesses/',

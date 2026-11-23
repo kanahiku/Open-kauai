@@ -29,6 +29,7 @@
     "import:listings": "node scripts/import-openkauai.mjs",
     "seed:site": "node scripts/seed-site.mjs",
     "seed:map": "node scripts/seed-map-page.mjs",
+    "seed:plan": "node scripts/seed-plan-page.mjs",
     "seed:directory": "node scripts/seed-directory-pages.mjs",
     "seed:pages": "node scripts/seed-pages.mjs"
   },
