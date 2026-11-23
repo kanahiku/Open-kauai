@@ -1,10 +1,11 @@
 /**
- * Plan with AI: sends the form to /api/plan/ and shows the day on the same page. All words on the
- * page come from Sanity (the server rendered them into the markup and data attributes); this file only
- * moves them around. Text from the server is always set as text, never as HTML.
+ * Plan with AI: for now, Build my day shows a static sample day on the same page. There is no server
+ * call. The words around the result come from Sanity (rendered into the markup and data attributes);
+ * this file only moves them around. Text is always set as text, never as HTML.
  */
 // A module, so its names stay out of the global scope shared with the other page scripts.
 import { onPageLoad } from '~/utils/page-load';
+import { SAMPLE_DAY } from './plan-sample';
 
 interface Stop {
   time: string;
@@ -152,8 +153,6 @@ function bind(root: HTMLElement) {
     section.focus({ preventScroll: true });
   }
 
-  const idleLabel = submitLabel.textContent ?? '';
-
   // The page may be served from a short cache, so settle "today" in the browser.
   const day = form.querySelector<HTMLSelectElement>('select[name="day"]');
   if (day) {
@@ -167,7 +166,7 @@ function bind(root: HTMLElement) {
     if (!day.dataset.touched) day.value = today;
   }
 
-  form.addEventListener('submit', async (event) => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
     show('');
 
@@ -177,39 +176,15 @@ function bind(root: HTMLElement) {
       return;
     }
 
-    // A GET with the choices in the query string: no request body, so nothing for a redirect to break.
-    const data = new FormData(form);
-    const params = new URLSearchParams();
-    for (const key of ['region', 'day', 'time', 'budget', 'note']) params.set(key, String(data.get(key) ?? ''));
-    for (const value of data.getAll('interests')) params.append('interests', String(value));
-
-    submit.disabled = true;
-    form.setAttribute('aria-busy', 'true');
-    if (root.dataset.building) submitLabel.textContent = root.dataset.building;
-
-    try {
-      const response = await fetch(`/api/plan/?${params.toString()}`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      });
-      if (response.status === 400) {
-        show(root.dataset.invalid ?? '');
-      } else if (response.status === 429) {
-        show(root.dataset.limit || root.dataset.error || '');
-      } else if (!response.ok) {
-        show(root.dataset.error ?? '');
-      } else {
-        const payload = (await response.json()) as { ok: boolean; result?: Result };
-        if (payload.ok && payload.result) render(payload.result);
-        else show(root.dataset.error ?? '');
-      }
-    } catch {
-      show(root.dataset.error ?? '');
-    }
-
-    submit.disabled = false;
-    form.setAttribute('aria-busy', 'false');
-    submitLabel.textContent = idleLabel;
+    const dayOption = day?.selectedOptions[0];
+    const dayName = dayOption?.dataset.label ?? dayOption?.textContent?.trim() ?? '';
+    const regionSelect = form.querySelector<HTMLSelectElement>('select[name="region"]');
+    const regionName = regionSelect?.selectedOptions[0]?.textContent?.trim() ?? '';
+    const template = regionSelect?.value === 'all' ? root.dataset.titleAllTemplate : root.dataset.titleTemplate;
+    const title = template
+      ? template.replace('{region}', regionName).replace('{day}', dayName)
+      : `Your Kauaʻi day${dayName ? `, ${dayName}` : ''}`;
+    render({ ...SAMPLE_DAY, title, note: root.dataset.resultNote || SAMPLE_DAY.note, summary: '' });
   });
 }
 
