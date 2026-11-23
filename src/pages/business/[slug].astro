@@ -1,0 +1,29 @@
+---
+/**
+ * /business/<slug>/. Rendered per request so the open/closed status is current and indexing follows
+ * the host. An unknown or unlisted slug is a 404.
+ */
+import PageLayout from '~/layouts/PageLayout.astro';
+import BusinessDetail from '~/components/business/BusinessDetail.astro';
+import { loadBusinessPage } from '~/lib/business-page';
+import { getSiteSettings } from '~/lib/site';
+import { siteOrigin } from '~/config/site';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.rewrite('/404');
+
+const [page, settings] = await Promise.all([loadBusinessPage(slug, siteOrigin()), getSiteSettings()]);
+if (!page) return Astro.rewrite('/404');
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+---
+
+<PageLayout
+  metadata={{
+    title: page.seo.title,
+    description: page.seo.description,
+    openGraph: page.seo.image ? { images: [{ url: page.seo.image }] } : undefined,
+  }}
+>
+  <BusinessDetail page={page} labels={settings.listingLabels} />
+</PageLayout>

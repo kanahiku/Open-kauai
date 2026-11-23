@@ -1,0 +1,33 @@
+---
+import PageLayout from '~/layouts/PageLayout.astro';
+import HomeHero from '~/components/home/HomeHero.astro';
+import HomeCategories from '~/components/home/HomeCategories.astro';
+import ListingShelf from '~/components/home/ListingShelf.astro';
+import MadeHere from '~/components/home/MadeHere.astro';
+import { loadHomeContent } from '~/lib/home';
+import { getSiteSettings } from '~/lib/site';
+
+// Rendered per request, not at build time: indexing and canonical depend on the request host,
+// and the "Open now" labels must be computed at request time. The CDN cache keeps it fast.
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const [home, settings] = await Promise.all([loadHomeContent(), getSiteSettings()]);
+---
+
+<PageLayout
+  overlayHeader
+  metadata={{
+    title: home.seo.title,
+    description: home.seo.description,
+    openGraph: home.hero.image ? { images: [{ url: home.hero.image }] } : undefined,
+  }}
+>
+  <HomeHero hero={home.hero} />
+  <HomeCategories title={home.startTitle} tiles={home.tiles} />
+  {
+    home.shelves.map((shelf, index) => (
+      <ListingShelf shelf={shelf} seeAllLabel={home.seeAllLabel} first={index === 0} labels={settings.listingLabels} />
+    ))
+  }
+  {home.madeHere && <MadeHere data={home.madeHere} />}
+</PageLayout>

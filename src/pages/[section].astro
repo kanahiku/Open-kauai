@@ -1,0 +1,21 @@
+---
+/**
+ * /activities/, /dining/ and /stay/. Anything else is a 404.
+ * Rendered per request so the "Open now" labels are current and indexing follows the host.
+ */
+import PageLayout from '~/layouts/PageLayout.astro';
+import SectionList from '~/components/directory/SectionList.astro';
+import { isSectionKey, loadSectionPage } from '~/lib/section-page';
+import { getSiteSettings } from '~/lib/site';
+
+const { section } = Astro.params;
+if (!isSectionKey(section)) return Astro.rewrite('/404');
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const [page, settings] = await Promise.all([loadSectionPage(section), getSiteSettings()]);
+---
+
+<PageLayout metadata={{ title: page.copy.seoTitle ?? page.copy.title, description: page.copy.seoDescription }}>
+  <SectionList page={page} labels={settings.listingLabels} />
+</PageLayout>

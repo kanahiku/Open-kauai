@@ -1,0 +1,18 @@
+---
+/**
+ * Waits for the listings, then renders the map. The page around it (header, loader) is sent first,
+ * so people see a loader instead of a blank screen while Sanity answers.
+ */
+import MapView from '~/components/map/MapView.astro';
+import { buildMapPage, type MapPageCopy, type RawBusiness } from '~/lib/map-page';
+
+interface Props {
+  copy: MapPageCopy;
+  businesses: Promise<RawBusiness[]>;
+}
+
+const { copy, businesses } = Astro.props;
+const page = buildMapPage(copy, await businesses, new Date());
+---
+
+<MapView page={page} />

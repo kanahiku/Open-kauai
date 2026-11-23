@@ -1,0 +1,29 @@
+---
+import Layout from '~/layouts/Layout.astro';
+import SiteHeader from '~/components/layout/SiteHeader.astro';
+import SiteFooter from '~/components/layout/SiteFooter.astro';
+
+import type { MetaData } from '~/types';
+import { getSiteSettings } from '~/lib/site';
+
+export interface Props {
+  metadata?: MetaData;
+  /** Header sits over the first block (hero photo). Put a hero first in the slot. */
+  overlayHeader?: boolean;
+  /** App-style page: fills the screen height and has no footer (the map). */
+  fullHeight?: boolean;
+}
+
+const { metadata, overlayHeader = false, fullHeight = false } = Astro.props;
+const settings = await getSiteSettings();
+---
+
+<Layout metadata={metadata}>
+  <div class:list={[fullHeight && 'flex h-dvh flex-col']}>
+    <SiteHeader settings={settings} overlay={overlayHeader} currentPath={Astro.url.pathname} />
+    <main class:list={[fullHeight && 'flex min-h-0 flex-1 flex-col']}>
+      <slot />
+    </main>
+    {!fullHeight && <SiteFooter settings={settings} />}
+  </div>
+</Layout>

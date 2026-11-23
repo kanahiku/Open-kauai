@@ -1,0 +1,147 @@
+---
+/**
+ * "Every pin is a neighbor": copy, business rows, and the island map teaser.
+ * Everything comes from the Sanity `homePage` document. Pins are placed from each business's
+ * coordinates (see lib/map.ts) and drawn in % of the Figma frame (656 x 480), so the map scales.
+ */
+import Image from '~/components/common/Image.astro';
+import { assetUrl } from '~/utils/assets';
+import { MAP_FRAME } from '~/lib/map';
+import type { MadeHereData } from '~/lib/home';
+import island from '~/assets/brand/island.svg';
+import placeholderPhoto from '~/assets/images/placeholder/business.jpg';
+import pin from '~/assets/brand/pin.svg';
+import pinSelected from '~/assets/brand/pin-selected.svg';
+import popoverDot from '~/assets/brand/popover-dot.svg';
+import arrowRight from '~/assets/icons/arrow-right-row.svg';
+import arrowRightCta from '~/assets/icons/arrow-right-cta.svg';
+
+interface Props {
+  data: MadeHereData;
+}
+
+const { data } = Astro.props;
+const { width, height, island: islandBox } = MAP_FRAME;
+const pct = (value: number, total: number) => `${((value / total) * 100).toFixed(4)}%`;
+const { popover, label } = data;
+---
+
+<section class="bg-white px-5 py-16 lg:px-[120px] lg:py-20">
+  <div class="mx-auto flex max-w-[1200px] flex-col gap-12 lg:flex-row lg:items-center lg:gap-16">
+    <div class="flex w-full flex-col gap-5 lg:w-[480px] lg:shrink-0">
+      {
+        data.eyebrow && (
+          <p class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">{data.eyebrow}</p>
+        )
+      }
+      {data.title && <h2 class="font-display text-[34px] leading-10 tracking-[-0.3px] text-teal-deep">{data.title}</h2>}
+      {data.body && <p class="font-serif text-[20px] leading-[30px] text-ink">{data.body}</p>}
+
+      {
+        data.rows.length > 0 && (
+          <ul class="flex flex-col gap-3">
+            {data.rows.map((row) => (
+              <li>
+                <a
+                  href={row.href}
+                  class="group flex items-center gap-3.5 rounded-md bg-tint p-2.5 transition-colors hover:bg-teal-wash"
+                >
+                  <Image
+                    src={row.photo || placeholderPhoto}
+                    alt=""
+                    layout="none"
+                    class="size-14 shrink-0 rounded-sm object-cover"
+                  />
+                  <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span class="font-display text-[21px] leading-[26px] text-ink">{row.name}</span>
+                    {row.line && (
+                      <span class="font-serif text-[17px] leading-[26px] text-muted italic">{row.line}</span>
+                    )}
+                  </span>
+                  <img src={assetUrl(arrowRight)} alt="" class="size-[18px] shrink-0" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      {
+        data.cta && (
+          <a
+            href={data.cta.href}
+            class="inline-flex w-fit items-center gap-2 rounded-pill bg-teal px-6 py-3.5 font-sans text-sm font-semibold text-white hover:bg-teal-deep"
+          >
+            {data.cta.label}
+            <img src={assetUrl(arrowRightCta)} alt="" class="size-[18px]" />
+          </a>
+        )
+      }
+    </div>
+
+    <div class="relative w-full overflow-hidden lg:w-[656px] lg:shrink-0" style={`aspect-ratio: ${width} / ${height};`}>
+      <img
+        src={assetUrl(island)}
+        alt=""
+        aria-hidden="true"
+        class="absolute"
+        style={`left:${pct(islandBox.x, width)};top:${pct(islandBox.y, height)};width:${pct(islandBox.width, width)};height:${pct(islandBox.height, height)};`}
+      />
+
+      {
+        label && (
+          <span
+            class="absolute font-display text-[13px] leading-4 tracking-[1.6px] text-teal-deep uppercase"
+            style={`left:${pct(label.x, width)};top:${pct(label.y, height)};`}
+          >
+            {label.text}
+          </span>
+        )
+      }
+
+      {
+        data.pins.map((p) => (
+          <img
+            src={assetUrl(p.selected ? pinSelected : pin)}
+            alt=""
+            aria-hidden="true"
+            class="absolute"
+            style={`left:${pct(p.x, width)};top:${pct(p.y, height)};width:${p.size}px;height:${p.size}px;`}
+          />
+        ))
+      }
+
+      {
+        popover && (
+          <a
+            href={popover.href}
+            class="absolute hidden w-[300px] items-center gap-3 rounded-xl bg-white p-3 shadow-popover md:flex"
+            style={`left:${pct(popover.x, width)};top:${pct(popover.y, height)};`}
+          >
+            <Image
+              src={popover.photo || placeholderPhoto}
+              alt=""
+              layout="none"
+              class="size-[72px] shrink-0 rounded-md object-cover"
+            />
+            <div class="flex flex-col gap-[3px]">
+              <p class="font-display text-[21px] leading-[26px] text-ink">{popover.name}</p>
+              {popover.meta && <p class="font-sans text-xs leading-4 text-muted">{popover.meta}</p>}
+              {popover.statusLabel && (
+                <p
+                  class:list={[
+                    'mt-1 flex w-fit items-center gap-1.5 rounded-pill bg-sand-wash px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold',
+                    popover.open ? 'text-leaf' : 'text-muted',
+                  ]}
+                >
+                  <img src={assetUrl(popoverDot)} alt="" class="size-2" />
+                  {popover.statusLabel}
+                </p>
+              )}
+            </div>
+          </a>
+        )
+      }
+    </div>
+  </div>
+</section>

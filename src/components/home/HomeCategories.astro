@@ -1,0 +1,66 @@
+---
+/**
+ * "Where to start": three category tiles over a deep-teal band with the kapa niho pattern.
+ * The pattern sits at the top and bottom edges only, never behind text.
+ */
+import Image from '~/components/common/Image.astro';
+import type { HomeTile } from '~/lib/home';
+import { assetUrl } from '~/utils/assets';
+import kapaBand from '~/assets/brand/kapa-band.svg';
+import arrowRight from '~/assets/icons/arrow-right.svg';
+interface Props {
+  title?: string;
+  tiles: HomeTile[];
+}
+
+const { title, tiles } = Astro.props;
+---
+
+<section class="relative overflow-hidden bg-teal-deep px-5 py-[120px] text-sea lg:px-[120px]">
+  <img
+    src={assetUrl(kapaBand)}
+    alt=""
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-x-0 top-0 h-9 w-full object-cover opacity-30 mix-blend-overlay"
+  />
+  <img
+    src={assetUrl(kapaBand)}
+    alt=""
+    aria-hidden="true"
+    class="pointer-events-none absolute inset-x-0 bottom-0 h-9 w-full object-cover opacity-30 mix-blend-overlay"
+  />
+
+  <div class="relative mx-auto flex max-w-[1200px] flex-col gap-7">
+    {title && <h2 class="font-display text-[34px] leading-10 tracking-[-0.3px]">{title}</h2>}
+
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
+      {
+        tiles.map((tile) => (
+          <a
+            href={tile.href}
+            class="group relative flex h-[300px] flex-col justify-end overflow-hidden rounded-lg p-7 text-white"
+          >
+            {tile.image && (
+              <Image
+                src={tile.image}
+                alt=""
+                layout="cover"
+                class="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+            )}
+            <span class="absolute inset-0 bg-gradient-to-b from-scrim/0 to-scrim/75" aria-hidden="true" />
+            <span class="relative flex items-end justify-between gap-4">
+              <span class="flex flex-col gap-1">
+                {tile.count && <span class="font-sans text-xs leading-4">{tile.count}</span>}
+                <span class="font-display text-[34px] leading-10 tracking-[-0.3px]">{tile.title}</span>
+              </span>
+              <span class="flex shrink-0 rounded-pill bg-white p-3">
+                <img src={assetUrl(arrowRight)} alt="" class="size-5" />
+              </span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</section>

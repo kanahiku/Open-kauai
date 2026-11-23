@@ -1,0 +1,31 @@
+---
+/**
+ * The Kauaʻi logo from the Hawaiian Islands brand guidelines (2026, p. 26, primary full-colour
+ * logo). `reversed` is the white version for dark surfaces (teal footer, photos). Do not recolour,
+ * stretch, add effects or separate the wording from the gradient bar (guidelines p. 26 and 31).
+ * Set the width with `class`, e.g. `class="w-[136.8px]"`. The height follows the image's ratio.
+ */
+import { assetUrl } from '~/utils/assets';
+import logo from '~/assets/brand/kauai-logo.png';
+import logoReversed from '~/assets/brand/kauai-logo-reversed.png';
+
+interface Props {
+  class?: string;
+  /** Accessible name, e.g. the site name from Sanity. */
+  label: string;
+  /** `reversed` (white) for dark surfaces, `color` for light ones. */
+  variant?: 'reversed' | 'color';
+}
+
+const { class: className = '', label, variant = 'reversed' } = Astro.props;
+const src = variant === 'color' ? logo : logoReversed;
+---
+
+<img
+  src={assetUrl(src)}
+  alt={label}
+  width="659"
+  height="334"
+  class:list={['block h-auto', className]}
+  decoding="async"
+/>

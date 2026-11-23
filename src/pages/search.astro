@@ -1,0 +1,141 @@
+---
+/**
+ * /search/?q=kayak. Matching towns and businesses. Rendered per request. Never indexed: result
+ * pages for every possible query would only be thin duplicates.
+ */
+import PageLayout from '~/layouts/PageLayout.astro';
+import ListingCard from '~/components/home/ListingCard.astro';
+import { assetUrl } from '~/utils/assets';
+import { fillTemplate } from '~/lib/business-page';
+import { getSearchIndex, loadSearchCopy, placeLine, search } from '~/lib/search';
+import { getSiteSettings } from '~/lib/site';
+import searchIcon from '~/assets/icons/search.svg';
+import mapPin from '~/assets/icons/map-pin.svg';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim().slice(0, 80);
+const [copy, settings] = await Promise.all([loadSearchCopy(), getSiteSettings()]);
+const results = q ? search(await getSearchIndex(), q, new Date()) : undefined;
+const hasResults = results ? results.places.length + results.businesses.length > 0 : false;
+---
+
+<PageLayout metadata={{ title: copy.seoTitle ?? copy.title, robots: { index: false, follow: true } }}>
+  <section class="bg-sea">
+    <div class="site-frame flex flex-col gap-6 py-10 lg:py-12">
+      {
+        copy.title && (
+          <h1 class="font-display text-[34px] leading-10 text-teal-deep lg:text-[44px] lg:leading-[52px]">
+            {copy.title}
+          </h1>
+        )
+      }
+      <form
+        action="/search/"
+        method="get"
+        role="search"
+        data-search-suggest
+        class="relative flex w-full max-w-[720px] items-center gap-2 rounded-pill border border-line bg-white p-2 focus-within:border-teal focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-sky"
+      >
+        <img src={assetUrl(searchIcon)} alt="" class="ml-3 size-[22px] shrink-0" />
+        <label class="min-w-0 flex-1">
+          <span class="sr-only">{copy.placeholder ?? copy.title}</span>
+          <input
+            type="search"
+            name="q"
+            value={q}
+            placeholder={copy.placeholder}
+            autocomplete="off"
+            maxlength="80"
+            class="w-full bg-transparent py-3 font-sans text-sm text-ink placeholder:text-muted focus:outline-none"
+          />
+        </label>
+        {
+          copy.buttonLabel && (
+            <button
+              type="submit"
+              class="rounded-pill bg-teal px-6 py-3 font-sans text-sm font-semibold text-white hover:bg-teal-deep"
+            >
+              {copy.buttonLabel}
+            </button>
+          )
+        }
+      </form>
+    </div>
+  </section>
+
+  <section class="site-frame flex flex-col gap-10 py-10 lg:py-14" aria-live="polite">
+    {
+      !results ? (
+        <div class="mx-auto flex max-w-[520px] flex-col items-center gap-2 py-10 text-center">
+          {copy.promptTitle && <h2 class="font-display text-[28px] leading-10 text-teal-deep">{copy.promptTitle}</h2>}
+          {copy.promptBody && <p class="font-serif text-lg leading-7 text-muted">{copy.promptBody}</p>}
+        </div>
+      ) : !hasResults ? (
+        <div class="mx-auto flex max-w-[520px] flex-col items-center gap-2 py-10 text-center">
+          {copy.emptyTitle && (
+            <h2 class="font-display text-[28px] leading-10 text-teal-deep">
+              {fillTemplate(copy.emptyTitle, { query: q })}
+            </h2>
+          )}
+          {copy.emptyBody && <p class="font-serif text-lg leading-7 text-muted">{copy.emptyBody}</p>}
+        </div>
+      ) : (
+        <>
+          {copy.resultsTemplate && (
+            <p class="font-sans text-xs leading-4 text-muted">
+              {fillTemplate(copy.resultsTemplate, { count: String(results.total + results.places.length), query: q })}
+            </p>
+          )}
+
+          {results.places.length > 0 && (
+            <div class="flex flex-col gap-4">
+              {copy.placesTitle && (
+                <h2 class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">
+                  {copy.placesTitle}
+                </h2>
+              )}
+              <ul class="flex flex-wrap gap-3">
+                {results.places.map((place) => (
+                  <li>
+                    <a
+                      href={place.href}
+                      class="flex items-center gap-3 rounded-card border border-line bg-white px-4 py-3 transition-colors hover:border-teal"
+                    >
+                      <img src={assetUrl(mapPin)} alt="" class="size-5 shrink-0" />
+                      <span class="flex flex-col">
+                        <span class="font-serif text-[18px] leading-6 text-ink">{place.title}</span>
+                        <span class="font-sans text-xs leading-4 text-muted">{placeLine(place, copy)}</span>
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {results.businesses.length > 0 && (
+            <div class="flex flex-col gap-4">
+              {copy.businessesTitle && (
+                <h2 class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">
+                  {copy.businessesTitle}
+                </h2>
+              )}
+              <ul class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {results.businesses.map(({ card }) => (
+                  <li>
+                    <ListingCard item={card} labels={settings.listingLabels} fluid />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )
+    }
+  </section>
+
+  <script>
+    import '~/scripts/search-suggest';
+  </script>
+</PageLayout>

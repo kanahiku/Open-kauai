@@ -1,0 +1,42 @@
+---
+/** /region/. All regions. Copy from `regionPage`, regions and counts from Sanity. */
+import PageLayout from '~/layouts/PageLayout.astro';
+import PageHero from '~/components/common/PageHero.astro';
+import { loadRegionIndex } from '~/lib/region-page';
+import { fillTemplate } from '~/lib/business-page';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const page = await loadRegionIndex();
+const { copy } = page;
+---
+
+<PageLayout metadata={{ title: page.seo.title, description: page.seo.description }}>
+  <PageHero eyebrow={copy.indexEyebrow} title={copy.indexTitle ?? ''} lede={copy.indexLede} />
+
+  <section class="site-frame py-12 lg:py-[72px]">
+    <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {
+        page.regions.map((region) => (
+          <li>
+            <a
+              href={region.href}
+              class="flex h-full flex-col gap-3 rounded-card border border-line bg-white p-6 shadow-card transition-colors hover:border-teal"
+            >
+              <h2 class="font-display text-[26px] leading-8 text-teal-deep">{region.title}</h2>
+              {region.tagline && <p class="font-serif text-[17px] leading-[26px] text-ink">{region.tagline}</p>}
+              <p class="mt-auto pt-2 font-sans text-xs leading-4 text-muted">
+                {[
+                  copy.placesTemplate ? fillTemplate(copy.placesTemplate, { count: String(region.places) }) : '',
+                  region.towns.join(', '),
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</PageLayout>

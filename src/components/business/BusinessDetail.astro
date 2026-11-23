@@ -1,0 +1,362 @@
+---
+/**
+ * Business page: photos, status and ownership, "Known for", tags, about, offerings, good to know,
+ * a sticky hours/contact card with a mini map, and nearby listings. Every block is hidden when the
+ * listing has nothing for it. Copy comes from the `businessPage` and `sectionPage` documents.
+ */
+import Image from '~/components/common/Image.astro';
+import ListingCard from '~/components/home/ListingCard.astro';
+import { assetUrl } from '~/utils/assets';
+import type { BusinessPageContent } from '~/lib/business-page';
+import type { ListingLabels } from '~/lib/site';
+import { MAP_FRAME } from '~/lib/map';
+import placeholderPhoto from '~/assets/images/placeholder/business.jpg';
+import dotOpen from '~/assets/brand/dot-open.svg';
+import dotClosed from '~/assets/brand/dot-closed.svg';
+import leaf from '~/assets/brand/leaf.svg';
+import island from '~/assets/brand/island.svg';
+import pinSelected from '~/assets/brand/pin-selected.svg';
+import navigationArrow from '~/assets/icons/navigation-arrow.svg';
+import mapPin from '~/assets/icons/map-pin.svg';
+
+interface Props {
+  page: BusinessPageContent;
+  labels?: ListingLabels;
+}
+
+const { page, labels = {} } = Astro.props;
+const { copy, section, actions, miniMap } = page;
+
+const ownershipLabel = page.ownership === 'local' ? labels.ownedLabel : labels.franchiseLabel;
+const hero = page.photos[0];
+const sideCount = Math.min(page.photos.length - 1, 4);
+const side = page.photos.slice(1, 1 + sideCount);
+
+const MINI_ZOOM = 1.8;
+const mapPercent = (value: number, total: number) => `${((value / total) * 100).toFixed(4)}%`;
+const frameIsland = MAP_FRAME.island;
+const eyebrow = 'font-display text-[13px] leading-4 tracking-[1.6px] uppercase';
+const button =
+  'flex w-full items-center justify-center gap-2 rounded-pill border border-line bg-white px-5 py-3 font-sans text-sm leading-5 font-semibold text-teal-deep transition-colors hover:border-teal hover:bg-teal-wash';
+---
+
+<article>
+  <div class="site-frame pt-4">
+    <nav aria-label="Breadcrumb">
+      <ol class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal/60 uppercase">
+        {
+          labels.homeLabel && (
+            <li class="inline">
+              <a href="/" class="hover:underline">
+                {labels.homeLabel}
+              </a>
+            </li>
+          )
+        }
+        {
+          section?.copy.breadcrumbLabel && (
+            <li class="inline">
+              {labels.homeLabel && <span aria-hidden="true"> / </span>}
+              <a href={section.href} class="hover:underline">
+                {section.copy.breadcrumbLabel}
+              </a>
+            </li>
+          )
+        }
+        {
+          page.area && (
+            <li class="inline">
+              {(labels.homeLabel || section?.copy.breadcrumbLabel) && <span aria-hidden="true"> / </span>}
+              <span aria-current="page">{page.area}</span>
+            </li>
+          )
+        }
+      </ol>
+    </nav>
+
+    <div
+      class:list={[
+        'mt-4 grid gap-4 overflow-hidden rounded-card',
+        side.length > 0 ? 'lg:h-[444px] lg:grid-cols-2' : 'lg:h-[444px]',
+      ]}
+    >
+      <div class="relative h-[260px] overflow-hidden bg-teal-wash lg:h-full">
+        <Image
+          src={hero?.src ?? placeholderPhoto}
+          alt={hero?.alt ?? ''}
+          layout="cover"
+          class="size-full object-cover"
+        />
+      </div>
+      {
+        side.length > 0 && (
+          <div
+            class:list={[
+              'hidden gap-4 lg:grid lg:h-full',
+              side.length === 1 ? 'grid-cols-1' : 'grid-cols-2',
+              side.length > 2 ? 'grid-rows-2' : 'grid-rows-1',
+            ]}
+          >
+            {side.map((photo) => (
+              <div class="relative overflow-hidden bg-teal-wash">
+                <Image src={photo.src} alt={photo.alt} layout="cover" class="size-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </div>
+
+  <div class="site-frame grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-12 lg:py-12">
+    <div class="flex min-w-0 flex-col gap-8">
+      <div class="flex flex-col gap-3.5">
+        <div class="flex flex-wrap items-center gap-2.5">
+          {
+            page.status.label && (
+              <span
+                class:list={[
+                  'flex items-center gap-1.5 rounded-pill bg-tint px-3 py-[5px] font-sans text-[13px] leading-[18px] font-semibold',
+                  page.status.open ? 'text-leaf' : 'text-muted',
+                ]}
+              >
+                <img src={assetUrl(page.status.open ? dotOpen : dotClosed)} alt="" class="size-2" />
+                {page.status.label}
+              </span>
+            )
+          }
+          {
+            page.ownership && ownershipLabel && (
+              <span class="flex items-center gap-1.5 rounded-pill bg-sand-wash px-3 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-leaf">
+                {page.ownership === 'local' && <img src={assetUrl(leaf)} alt="" class="size-3.5" />}
+                {ownershipLabel}
+              </span>
+            )
+          }
+        </div>
+        <h1
+          class="font-display text-[40px] leading-[46px] tracking-[-0.5px] text-teal-deep lg:text-[52px] lg:leading-[56px]"
+        >
+          {page.name}
+        </h1>
+        {page.meta && <p class="font-sans text-sm leading-5 text-muted">{page.meta}</p>}
+      </div>
+
+      {
+        page.knownFor && (
+          <div class="flex flex-col gap-2.5 rounded-[22px] bg-sand-wash p-6 lg:p-8">
+            {labels.knownForLabel && <p class={`${eyebrow} text-sand`}>{labels.knownForLabel}</p>}
+            <p class="font-display text-[28px] leading-9 text-teal-deep first-letter:uppercase lg:text-[34px] lg:leading-10">
+              {page.knownFor}
+            </p>
+            {copy.knownForCaption && <p class="font-sans text-xs leading-4 text-muted">{copy.knownForCaption}</p>}
+          </div>
+        )
+      }
+
+      {
+        page.mentions.length > 0 && (
+          <section class="flex flex-col gap-3" aria-label={copy.mentionTitle}>
+            {copy.mentionTitle && <h2 class={`${eyebrow} text-teal`}>{copy.mentionTitle}</h2>}
+            <ul class="flex flex-wrap gap-2">
+              {page.mentions.map((mention) => (
+                <li class="rounded-pill bg-sea px-3 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-teal-deep">
+                  {mention}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      {
+        page.description && (
+          <section class="flex flex-col gap-3" aria-label={copy.aboutTitle}>
+            {copy.aboutTitle && <h2 class={`${eyebrow} text-teal`}>{copy.aboutTitle}</h2>}
+            <p class="font-serif text-[20px] leading-[30px] whitespace-pre-line text-ink">{page.description}</p>
+          </section>
+        )
+      }
+
+      {
+        page.offerings.length > 0 && (
+          <section class="flex flex-col gap-3" aria-label={section?.copy.offeringsTitle}>
+            {section?.copy.offeringsTitle && <h2 class={`${eyebrow} text-teal`}>{section.copy.offeringsTitle}</h2>}
+            <ul class="grid gap-3.5 sm:grid-cols-3">
+              {page.offerings.map((offering) => (
+                <li class="flex flex-col gap-1 rounded-card bg-tint p-5">
+                  <p class="font-display text-[21px] leading-[26px] text-ink">{offering.title}</p>
+                  {offering.note && <p class="font-sans text-xs leading-4 text-muted">{offering.note}</p>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      {
+        page.goodToKnow.length > 0 && (
+          <section class="flex flex-col gap-3" aria-label={copy.goodToKnowTitle}>
+            {copy.goodToKnowTitle && <h2 class={`${eyebrow} text-teal`}>{copy.goodToKnowTitle}</h2>}
+            <ul class="grid gap-3.5 sm:grid-cols-2">
+              {page.goodToKnow.map((fact) => (
+                <li class="flex flex-col gap-0.5 rounded-card border border-line bg-white p-4">
+                  <p class="font-display text-[21px] leading-[26px] text-ink">{fact.title}</p>
+                  {fact.note && <p class="font-sans text-xs leading-4 text-muted">{fact.note}</p>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </div>
+
+    <aside class="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
+      <div class="flex flex-col gap-3 rounded-[22px] border border-line bg-white p-6 shadow-card">
+        {
+          (page.hoursHeading || page.todayHours) && (
+            <div class="flex flex-col gap-1">
+              {page.hoursHeading && (
+                <p class="font-display text-2xl leading-[30px] text-teal-deep">{page.hoursHeading}</p>
+              )}
+              {page.todayHours && <p class="font-sans text-[13px] leading-[18px] text-muted">{page.todayHours}</p>}
+            </div>
+          )
+        }
+
+        {
+          !page.todayHours && page.hoursNote && (
+            <div class="flex flex-col gap-1">
+              {copy.hoursNoteTitle && (
+                <p class="font-sans text-[13px] leading-[18px] font-semibold text-muted">{copy.hoursNoteTitle}</p>
+              )}
+              <p class="font-sans text-[13px] leading-5 whitespace-pre-line text-ink">{page.hoursNote}</p>
+            </div>
+          )
+        }
+
+        {
+          actions.bookingUrl && section?.copy.primaryActionLabel && (
+            <a
+              href={actions.bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="flex w-full items-center justify-center rounded-pill bg-teal px-5 py-3.5 font-sans text-sm leading-5 font-semibold text-white transition-colors hover:bg-teal-deep"
+            >
+              {section.copy.primaryActionLabel}
+            </a>
+          )
+        }
+        {
+          actions.phone && copy.callLabel && (
+            <a href={actions.phone.href} class={button}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              {copy.callLabel}
+              <span class="font-normal">{actions.phone.label}</span>
+            </a>
+          )
+        }
+        {
+          actions.website && copy.websiteLabel && (
+            <a href={actions.website} target="_blank" rel="noopener noreferrer" class={button}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              {copy.websiteLabel}
+            </a>
+          )
+        }
+        {
+          actions.directions && copy.directionsLabel && (
+            <a href={actions.directions} target="_blank" rel="noopener noreferrer" class={button}>
+              <img src={assetUrl(navigationArrow)} alt="" class="size-4" />
+              {copy.directionsLabel}
+            </a>
+          )
+        }
+      </div>
+
+      {
+        miniMap && (
+          <div class="flex flex-col gap-2">
+            <div
+              class="relative h-[120px] overflow-hidden rounded-[22px] bg-sea"
+              style="container-type:inline-size"
+              role="img"
+              aria-label={page.area ? `${page.name}, ${page.area}` : page.name}
+            >
+              <div
+                class="absolute"
+                style={`width:${MINI_ZOOM * 100}cqw;aspect-ratio:${miniMap.width} / ${miniMap.height};left:calc(50cqw - ${((miniMap.x / miniMap.width) * MINI_ZOOM * 100).toFixed(3)}cqw);top:calc(60px - ${((miniMap.y / miniMap.width) * MINI_ZOOM * 100).toFixed(3)}cqw);`}
+              >
+                <img
+                  src={assetUrl(island)}
+                  alt=""
+                  aria-hidden="true"
+                  class="absolute"
+                  style={`left:${mapPercent(frameIsland.x, MAP_FRAME.width)};top:${mapPercent(frameIsland.y, MAP_FRAME.height)};width:${mapPercent(frameIsland.width, MAP_FRAME.width)};height:${mapPercent(frameIsland.height, MAP_FRAME.height)};`}
+                />
+                <img
+                  src={assetUrl(pinSelected)}
+                  alt=""
+                  aria-hidden="true"
+                  class="absolute size-[22px] -translate-x-1/2 -translate-y-1/2"
+                  style={`left:${mapPercent(miniMap.x, miniMap.width)};top:${mapPercent(miniMap.y, miniMap.height)};`}
+                />
+              </div>
+              {page.area && (
+                <span class="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-pill bg-white px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-ink shadow-popover">
+                  <img src={assetUrl(mapPin)} alt="" class="size-3.5" />
+                  {page.area}
+                </span>
+              )}
+            </div>
+            {page.address && <p class="px-2 font-sans text-xs leading-4 text-muted">{page.address}</p>}
+          </div>
+        )
+      }
+    </aside>
+  </div>
+
+  {
+    page.nearby.length > 0 && (
+      <section class="bg-tint" aria-label={page.nearbyTitle}>
+        <div class="site-frame flex flex-col gap-6 py-12">
+          {page.nearbyTitle && <h2 class="font-display text-[28px] leading-9 text-teal-deep">{page.nearbyTitle}</h2>}
+          <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {page.nearby.map((item) => (
+              <li>
+                <ListingCard item={item} labels={labels} fluid />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(page.schema).replace(/</g, '\\u003c')} />
+</article>

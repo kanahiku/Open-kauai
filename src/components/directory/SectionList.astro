@@ -1,0 +1,307 @@
+---
+/**
+ * Browse page for one section: title block, type chips, filter sidebar and a grid of listing cards.
+ * Every listing is rendered on the server (good for search engines). The script in
+ * `scripts/section-filter.ts` filters, sorts and pages them in the browser, and keeps the URL in sync.
+ * Filters only appear when the listings have something to filter by.
+ */
+import ListingCard from '~/components/home/ListingCard.astro';
+import { assetUrl } from '~/utils/assets';
+import type { SectionPageContent } from '~/lib/section-page';
+import type { ListingLabels } from '~/lib/site';
+import caretDown from '~/assets/icons/caret-down.svg';
+import listIcon from '~/assets/icons/list.svg';
+import mapIcon from '~/assets/icons/map-trifold.svg';
+import slidersIcon from '~/assets/icons/sliders.svg';
+
+interface Props {
+  page: SectionPageContent;
+  labels?: ListingLabels;
+}
+
+const PAGE_SIZE = 12;
+
+const { page, labels = {} } = Astro.props;
+const { copy, items, types, areas, hasOwned } = page;
+
+const showChips = types.length > 1;
+const config = { pageSize: PAGE_SIZE, countTemplate: copy.countTemplate ?? '' };
+
+const group = 'flex w-full flex-col gap-3 border-t border-line pt-3';
+const groupTitle = 'font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase';
+---
+
+<div data-section-list>
+  <section class="bg-sea">
+    <div class="site-frame flex flex-col gap-6 pt-7 pb-8 lg:gap-9 lg:pb-9">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div class="flex flex-col gap-2">
+          <nav aria-label="Breadcrumb">
+            <ol class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal/60 uppercase">
+              <li class="inline">
+                {
+                  labels.homeLabel ? (
+                    <a href="/" class="hover:underline">
+                      {labels.homeLabel}
+                    </a>
+                  ) : null
+                }
+              </li>
+              {
+                copy.breadcrumbLabel && (
+                  <li class="inline">
+                    {labels.homeLabel && <span aria-hidden="true"> / </span>}
+                    <span aria-current="page">{copy.breadcrumbLabel}</span>
+                  </li>
+                )
+              }
+            </ol>
+          </nav>
+          <h1
+            class="font-display text-[34px] leading-10 tracking-[-0.5px] text-teal-deep lg:text-[52px] lg:leading-[56px]"
+          >
+            {copy.title}
+          </h1>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3.5">
+          {
+            copy.countTemplate && (
+              <p class="font-sans text-xs leading-4 text-muted" data-count aria-live="polite">
+                {copy.countTemplate.replace('{count}', String(items.length))}
+              </p>
+            )
+          }
+          {
+            copy.sortOpenFirstLabel && copy.sortNameLabel && (
+              <div class="relative">
+                <span class="flex items-center gap-1.5 rounded-pill border border-line bg-white py-[5px] pr-2.5 pl-2.5 font-sans text-[13px] leading-[18px] font-semibold text-ink">
+                  <span data-sort-text>{[copy.sortLabel, copy.sortOpenFirstLabel].filter(Boolean).join(' ')}</span>
+                  <img src={assetUrl(caretDown)} alt="" class="size-3.5" />
+                </span>
+                <select
+                  data-sort
+                  aria-label={copy.sortLabel ?? 'Sort'}
+                  class="absolute inset-0 size-full cursor-pointer opacity-0"
+                  data-prefix={copy.sortLabel ?? ''}
+                >
+                  <option value="open" data-text={copy.sortOpenFirstLabel}>
+                    {copy.sortOpenFirstLabel}
+                  </option>
+                  <option value="name" data-text={copy.sortNameLabel}>
+                    {copy.sortNameLabel}
+                  </option>
+                </select>
+              </div>
+            )
+          }
+          <div class="flex gap-1 rounded-pill bg-tint p-1">
+            <span
+              class="flex items-center gap-2 rounded-pill bg-white px-[18px] py-[9px] font-sans text-[13px] leading-[18px] font-semibold text-ink shadow-[0_2px_6px_rgba(0,51,77,0.14)]"
+              aria-current="true"
+            >
+              <img src={assetUrl(listIcon)} alt="" class="size-3.5" />
+              {copy.listLabel}
+            </span>
+            <a
+              href={page.mapHref}
+              class="flex items-center gap-2 rounded-pill px-[18px] py-[9px] font-sans text-[13px] leading-[18px] font-semibold text-muted hover:text-ink"
+            >
+              <img src={assetUrl(mapIcon)} alt="" class="size-3.5" />
+              {copy.mapLabel}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {
+        showChips && (
+          <ul class="-mx-5 flex gap-3.5 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-wrap lg:px-0">
+            {[{ value: '', label: copy.allTypesLabel ?? '' }, ...types].map((type) => (
+              <li class="shrink-0">
+                <button
+                  type="button"
+                  data-chip={type.value}
+                  aria-pressed={type.value === '' ? 'true' : 'false'}
+                  class="flex items-center gap-2 rounded-pill border border-line bg-white px-[18px] py-[11px] font-sans text-[13px] leading-[18px] font-semibold whitespace-nowrap text-ink transition-colors hover:border-teal aria-pressed:border-teal aria-pressed:bg-teal-wash aria-pressed:text-teal-deep"
+                >
+                  {type.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+
+  <div class="site-frame flex flex-col gap-6 py-8 lg:flex-row lg:gap-8 lg:py-14">
+    {
+      (
+        <div class="lg:w-[268px] lg:shrink-0">
+          <button
+            type="button"
+            data-filters-toggle
+            aria-expanded="false"
+            class="flex items-center gap-2 rounded-pill border border-line bg-white px-[18px] py-[9px] font-sans text-[13px] leading-[18px] font-semibold text-ink lg:hidden"
+          >
+            <img src={assetUrl(slidersIcon)} alt="" class="size-3.5" />
+            {copy.filtersTitle}
+          </button>
+
+          <aside
+            data-filters-panel
+            aria-label={copy.filtersTitle}
+            class="flex flex-col gap-6 pr-3 max-lg:mt-4 max-lg:[&:not([data-open=true])]:hidden lg:sticky lg:top-6 lg:border-r lg:border-line"
+          >
+            <div class="flex items-center justify-between">
+              <h2 class="font-display text-2xl leading-[30px] text-teal-deep">{copy.filtersTitle}</h2>
+              <button
+                type="button"
+                data-clear
+                class="font-sans text-sm leading-5 font-semibold text-teal hover:underline"
+              >
+                {copy.clearAllLabel}
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              {copy.openNowLabel && (
+                <div class="flex items-center justify-between">
+                  <span class="font-serif text-[17px] leading-[26px] text-ink">{copy.openNowLabel}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked="false"
+                    aria-label={copy.openNowLabel}
+                    data-toggle="open"
+                    class="group relative h-[26px] w-11 shrink-0 rounded-pill bg-line transition-colors aria-checked:bg-teal"
+                  >
+                    <span class="absolute top-[3px] left-[3px] size-5 rounded-full bg-white shadow transition-transform group-aria-checked:translate-x-[18px]" />
+                  </button>
+                </div>
+              )}
+              {hasOwned && copy.locallyOwnedLabel && (
+                <div class="flex items-center justify-between">
+                  <span class="font-serif text-[17px] leading-[26px] text-ink">{copy.locallyOwnedLabel}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked="false"
+                    aria-label={copy.locallyOwnedLabel}
+                    data-toggle="owned"
+                    class="group relative h-[26px] w-11 shrink-0 rounded-pill bg-line transition-colors aria-checked:bg-teal"
+                  >
+                    <span class="absolute top-[3px] left-[3px] size-5 rounded-full bg-white shadow transition-transform group-aria-checked:translate-x-[18px]" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {areas.length > 0 && (
+              <fieldset class={group}>
+                {copy.areaTitle && <legend class={`${groupTitle} float-left w-full pb-3`}>{copy.areaTitle}</legend>}
+                <div class="flex flex-col gap-3">
+                  {areas.map((area) => (
+                    <label class="flex cursor-pointer items-center gap-2.5">
+                      <input type="checkbox" value={area.value} data-area class="peer sr-only" />
+                      <span class="flex size-5 shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-line bg-white peer-checked:border-teal peer-checked:bg-teal peer-focus-visible:ring-2 peer-focus-visible:ring-sky peer-checked:[&>svg]:block">
+                        <svg
+                          class="hidden"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          stroke-width="3.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M5 12.5l4.5 4.5L19 7.5" />
+                        </svg>
+                      </span>
+                      <span class="min-w-0 flex-1 font-serif text-[17px] leading-[26px] text-ink">{area.label}</span>
+                      <span class="font-sans text-xs leading-4 text-muted">{area.count}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+          </aside>
+        </div>
+      )
+    }
+
+    <div class="min-w-0 flex-1">
+      <ul data-grid class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {
+          items.map((item, index) => (
+            <li
+              data-item
+              data-type={item.type}
+              data-area={item.area}
+              data-owned={item.owned ? '1' : ''}
+              data-open={item.open ? '1' : ''}
+              data-rank-open={item.rankOpen}
+              data-rank-name={item.rankName}
+              hidden={index >= PAGE_SIZE}
+            >
+              <ListingCard item={item.card} labels={labels} fluid />
+            </li>
+          ))
+        }
+      </ul>
+
+      <div data-empty hidden class="flex flex-col items-center gap-2 rounded-card bg-tint px-6 py-14 text-center">
+        {copy.emptyTitle && <p class="font-display text-2xl leading-[30px] text-teal-deep">{copy.emptyTitle}</p>}
+        {copy.emptyBody && <p class="font-serif text-[17px] leading-[26px] text-muted">{copy.emptyBody}</p>}
+        {
+          copy.clearAllLabel && (
+            <button
+              type="button"
+              data-clear
+              class="mt-3 rounded-pill border-2 border-teal px-8 py-3.5 font-sans text-sm leading-5 font-semibold text-teal hover:bg-teal-wash"
+            >
+              {copy.clearAllLabel}
+            </button>
+          )
+        }
+      </div>
+
+      {
+        copy.showMoreLabel && items.length > PAGE_SIZE && (
+          <div class="flex justify-center pt-12">
+            <button
+              type="button"
+              data-more
+              class="rounded-pill border-2 border-teal px-8 py-3.5 font-sans text-sm leading-5 font-semibold text-teal transition-colors hover:bg-teal-wash"
+            >
+              {copy.showMoreLabel}
+            </button>
+          </div>
+        )
+      }
+    </div>
+  </div>
+
+  <script
+    type="application/json"
+    data-section-config
+    is:inline
+    set:html={JSON.stringify(config).replace(/</g, '\\u003c')}
+  />
+  <noscript
+    ><style>
+      [data-item][hidden] {
+        display: list-item !important;
+      }
+    </style></noscript
+  >
+</div>
+
+<script>
+  import { initSectionList } from '~/scripts/section-filter';
+
+  document.querySelectorAll<HTMLElement>('[data-section-list]').forEach(initSectionList);
+</script>

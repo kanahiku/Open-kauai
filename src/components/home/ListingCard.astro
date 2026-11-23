@@ -1,0 +1,89 @@
+---
+/**
+ * Listing card: photo with open status and ownership tag, then name, meta, and "Known for".
+ * Status is computed at build time from the business's hours (see lib/hours.ts).
+ * Optional parts (ownership tag, price, "Known for") are hidden when Sanity has no value for them.
+ * Cards in the same row or shelf stretch to the same height (the parent list stretches them), and
+ * the "Known for" box sits at the bottom. A card takes no extra space of its own: the name clamps
+ * to two lines and "Known for" to three.
+ */
+import Image from '~/components/common/Image.astro';
+import { assetUrl } from '~/utils/assets';
+import type { ListingCardData } from '~/lib/home';
+import type { ListingLabels } from '~/lib/site';
+import placeholderPhoto from '~/assets/images/placeholder/business.jpg';
+import dotOpen from '~/assets/brand/dot-open.svg';
+import dotClosed from '~/assets/brand/dot-closed.svg';
+import leaf from '~/assets/brand/leaf.svg';
+
+interface Props {
+  item: ListingCardData;
+  /** Labels from Site settings. A missing label hides that part of the card. */
+  labels?: ListingLabels;
+  /** Fill the grid cell instead of the fixed shelf width. */
+  fluid?: boolean;
+}
+
+const { item, labels = {}, fluid = false } = Astro.props;
+const ownershipLabel = item.ownership === 'local' ? labels.ownedLabel : labels.franchiseLabel;
+---
+
+<a
+  href={item.href}
+  class:list={[
+    'group flex flex-col gap-3 overflow-hidden rounded-card border border-line bg-white transition-shadow hover:shadow-card focus-visible:ring-2 focus-visible:ring-sky focus-visible:outline-none',
+    'h-full',
+    fluid ? 'w-full' : 'w-[282px]',
+  ]}
+>
+  <span class="relative block h-[286px] shrink-0 overflow-hidden bg-teal-wash">
+    <Image
+      src={item.photo || placeholderPhoto}
+      alt=""
+      layout="cover"
+      class="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+    />
+    {
+      item.statusLabel && (
+        <span class="absolute top-3 left-3 flex items-center gap-1.5 rounded-pill bg-ink/45 px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-white backdrop-blur-[5px]">
+          <img src={assetUrl(item.open ? dotOpen : dotClosed)} alt="" class="size-2" />
+          {item.statusLabel}
+        </span>
+      )
+    }
+    {
+      item.ownership && ownershipLabel && (
+        <span class="absolute right-2 bottom-1.5 flex items-center gap-1.5 rounded-pill bg-ink px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-sand">
+          {item.ownership === 'local' && <img src={assetUrl(leaf)} alt="" class="size-3.5" />}
+          {ownershipLabel}
+        </span>
+      )
+    }
+  </span>
+
+  <span class="flex flex-col gap-1.5 px-2 pb-3">
+    <span class="line-clamp-2 font-display text-[21px] leading-[26px] text-ink">{item.name}</span>
+    {
+      (item.meta || item.price) && (
+        <span class="flex items-center gap-1.5 font-sans text-xs leading-4 text-muted">
+          {item.meta && <span>{item.meta}</span>}
+          {item.meta && item.price && <span aria-hidden="true">·</span>}
+          {item.price && <span>{item.price}</span>}
+        </span>
+      )
+    }
+  </span>
+
+  {
+    item.knownFor && (
+      <span class="mt-auto flex w-full flex-col gap-1 bg-sand-wash px-3.5 py-2.5">
+        {labels.knownForLabel && (
+          <span class="font-display text-[13px] leading-4 tracking-[1.6px] text-sand uppercase">
+            {labels.knownForLabel}
+          </span>
+        )}
+        <span class="line-clamp-3 font-serif text-sm leading-[26px] text-ink italic">{item.knownFor}</span>
+      </span>
+    )
+  }
+</a>

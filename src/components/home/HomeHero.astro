@@ -1,0 +1,116 @@
+---
+/**
+ * Home hero. Full-bleed photo, scrims, category tabs, headline and search.
+ * All copy comes from the Sanity `homePage` document. Search submits to /search/ with `q`.
+ */
+import Image from '~/components/common/Image.astro';
+import type { HomeContent } from '~/lib/home';
+import { assetUrl } from '~/utils/assets';
+import searchIcon from '~/assets/icons/search.svg';
+import mapPinIcon from '~/assets/icons/map-pin.svg';
+
+interface Props {
+  hero: HomeContent['hero'];
+}
+
+const { hero } = Astro.props;
+---
+
+<section class="relative isolate z-20 flex min-h-[800px] flex-col overflow-x-clip text-white">
+  {
+    hero.image && (
+      <Image
+        src={hero.image}
+        alt=""
+        layout="cover"
+        loading="eager"
+        class="absolute inset-0 -z-20 size-full object-cover"
+      />
+    )
+  }
+  <div
+    class="absolute inset-0 -z-10 bg-gradient-to-b from-scrim/55 via-scrim/10 via-[45%] to-scrim/70"
+    aria-hidden="true"
+  >
+  </div>
+  <div
+    class="absolute inset-y-0 left-0 -z-10 w-full max-w-[900px] bg-gradient-to-r from-scrim/60 to-scrim/0"
+    aria-hidden="true"
+  >
+  </div>
+
+  <div class="flex flex-1 flex-col items-center px-5 pt-[152px] text-center">
+    <nav aria-label="Browse categories" class="flex items-center gap-4 rounded-pill bg-black/10 px-6 py-4">
+      {
+        hero.tabs.map((tab) => (
+          <a
+            href={tab.href}
+            class="flex w-[82px] flex-col items-center gap-2 px-3 font-sans text-[14px] leading-5 font-semibold"
+          >
+            <span
+              class:list={[
+                'flex items-center justify-center rounded-pill p-4',
+                tab.active ? 'border border-sky bg-teal shadow-[0_0_10px_rgba(255,255,255,0.15)]' : 'bg-teal-wash',
+              ]}
+            >
+              <img
+                src={assetUrl(tab.icon)}
+                alt=""
+                class={['size-[26px]', tab.active ? 'brightness-0 invert' : ''].join(' ')}
+              />
+            </span>
+            {tab.label}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+
+  <div class="flex flex-col items-center gap-6 px-5 pb-[92px] text-center">
+    {hero.eyebrow && <p class="font-display text-[13px] leading-4 tracking-[1.6px] uppercase">{hero.eyebrow}</p>}
+    <h1 class="max-w-[820px] font-display text-[56px] leading-[64px] tracking-[-1px] md:text-[68px] md:leading-[72px]">
+      {hero.title}
+    </h1>
+    {hero.lede && <p class="max-w-[640px] font-serif text-lg leading-[30px] md:text-[20px]">{hero.lede}</p>}
+
+    <form
+      action="/search/"
+      method="get"
+      role="search"
+      data-search-suggest
+      class="relative mt-2 flex w-full max-w-[880px] flex-col items-stretch gap-2 rounded-pill bg-white p-2.5 text-ink md:flex-row md:items-center"
+    >
+      <label class="flex min-w-0 flex-1 items-center gap-3 px-5">
+        <img src={assetUrl(searchIcon)} alt="" class="size-[22px] shrink-0" />
+        <span class="sr-only">{hero.searchPlaceholder}</span>
+        <input
+          type="search"
+          name="q"
+          placeholder={hero.searchPlaceholder}
+          class="min-w-0 flex-1 bg-transparent py-3 font-sans text-sm text-ink placeholder:text-muted focus:outline-none"
+        />
+      </label>
+      {
+        hero.searchLocationLabel && (
+          <>
+            <span class="hidden h-8 w-px bg-line md:block" aria-hidden="true" />
+            <span class="flex items-center gap-2.5 px-6 font-sans text-sm whitespace-nowrap">
+              <img src={assetUrl(mapPinIcon)} alt="" class="size-5" />
+              {hero.searchLocationLabel}
+            </span>
+          </>
+        )
+      }
+      <button
+        type="submit"
+        class="inline-flex items-center justify-center rounded-pill bg-teal px-8 py-[18px] font-sans text-sm font-semibold text-white hover:bg-teal-deep"
+      >
+        {hero.searchButtonLabel}
+      </button>
+    </form>
+  </div>
+
+  <script>
+    import '~/scripts/search-suggest';
+  </script>
+</section>

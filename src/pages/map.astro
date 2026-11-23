@@ -1,0 +1,35 @@
+---
+import PageLayout from '~/layouts/PageLayout.astro';
+import MapStream from '~/components/map/MapStream.astro';
+import { loadMapBusinesses, loadMapCopy } from '~/lib/map-page';
+
+// Rendered per request: indexing depends on the host, and "Open now" is worked out at request time.
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+// Start both requests now. Only the small copy request blocks the page; the listings stream in after.
+const businesses = loadMapBusinesses();
+businesses.catch(() => undefined);
+const copy = await loadMapCopy();
+---
+
+<PageLayout fullHeight metadata={{ title: copy.seoTitle ?? copy.title, description: copy.seoDescription }}>
+  <div class="relative flex min-h-0 flex-1 flex-col">
+    <div
+      data-map-loader
+      role="status"
+      aria-live="polite"
+      class="absolute inset-0 z-50 flex items-center justify-center bg-white"
+    >
+      <span class="size-10 animate-spin rounded-full border-[3px] border-teal-wash border-t-teal"></span>
+      {copy.loadingLabel && <span class="sr-only">{copy.loadingLabel}</span>}
+    </div>
+    <MapStream copy={copy} businesses={businesses} />
+  </div>
+  <noscript
+    ><style>
+      [data-map-loader] {
+        display: none;
+      }
+    </style></noscript
+  >
+</PageLayout>

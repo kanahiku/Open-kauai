@@ -1,0 +1,106 @@
+---
+/**
+ * Site header. `overlay` sits on top of a hero photo (white text, transparent).
+ * Otherwise it is the white bar with the colour logo used on inner pages.
+ * Mobile uses a details/summary menu (no JS).
+ */
+import Logo from '~/components/Logo.astro';
+import type { SiteSettings } from '~/lib/site';
+
+interface Props {
+  settings: SiteSettings;
+  overlay?: boolean;
+  /** Path of the current page, used to highlight its link. */
+  currentPath?: string;
+}
+
+const { settings, overlay = false, currentPath = '' } = Astro.props;
+const links = settings.headerLinks ?? [];
+const action = settings.headerAction?.label && settings.headerAction.href ? settings.headerAction : undefined;
+
+const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
+const isCurrent = (href: string) => {
+  if (!currentPath || !href.startsWith('/')) return false;
+  const target = normalize(href.split(/[?#]/)[0]);
+  const here = normalize(currentPath);
+  return target === '/' ? here === '/' : here === target || here.startsWith(`${target}/`);
+};
+---
+
+<header class:list={['z-30 w-full', overlay ? 'absolute inset-x-0 top-0' : 'bg-white']}>
+  <nav
+    class:list={['site-frame flex items-center justify-between py-6', overlay ? 'text-white' : 'text-ink']}
+    aria-label="Main"
+  >
+    <a href="/" class="block w-[136.8px] shrink-0" aria-label={`${settings.siteName} home`}>
+      <Logo class="w-full" label={settings.siteName} variant={overlay ? 'reversed' : 'color'} />
+    </a>
+
+    <ul class="hidden items-center gap-9 font-sans text-[14px] leading-5 font-semibold lg:flex">
+      {
+        links.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              aria-current={isCurrent(link.href) ? 'page' : undefined}
+              class:list={['hover:underline focus-visible:underline', !overlay && isCurrent(link.href) && 'text-teal']}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="flex items-center gap-3">
+      {
+        action && (
+          <a
+            href={action.href}
+            class:list={[
+              'hidden h-11 items-center rounded-pill border-[1.5px] px-[18px] font-sans text-[13px] leading-[18px] font-semibold whitespace-nowrap lg:inline-flex',
+              overlay
+                ? 'border-white hover:bg-white hover:text-teal-deep'
+                : 'border-teal-deep text-teal-deep hover:bg-teal-deep hover:text-white',
+            ]}
+          >
+            {action.label}
+          </a>
+        )
+      }
+
+      <details class="group relative lg:hidden">
+        <summary
+          class:list={[
+            'flex h-11 cursor-pointer list-none items-center rounded-pill border-[1.5px] px-[18px] font-sans text-[13px] font-semibold',
+            overlay ? 'border-white' : 'border-teal-deep text-teal-deep',
+          ]}
+        >
+          {settings.menuLabel}
+        </summary>
+        <div
+          class="absolute right-0 mt-3 flex w-64 flex-col gap-1 rounded-card bg-white p-4 font-sans text-[15px] font-semibold text-ink shadow-popover"
+        >
+          {
+            links.map((link) => (
+              <a
+                href={link.href}
+                aria-current={isCurrent(link.href) ? 'page' : undefined}
+                class:list={['rounded-sm px-2 py-2 hover:bg-tint', isCurrent(link.href) && 'text-teal']}
+              >
+                {link.label}
+              </a>
+            ))
+          }
+          {
+            action && (
+              <a href={action.href} class="mt-2 rounded-pill bg-teal px-4 py-3 text-center text-white">
+                {action.label}
+              </a>
+            )
+          }
+        </div>
+      </details>
+    </div>
+  </nav>
+</header>

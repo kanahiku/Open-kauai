@@ -1,0 +1,83 @@
+@import 'tailwindcss';
+
+@plugin "@tailwindcss/typography";
+
+@variant dark (&:where(.dark, .dark *));
+
+@custom-variant intersect (&:not([no-intersect]));
+
+/*
+ * Theme tokens. Values live in src/brand.ts (injected as --aw-color-* and
+ * --aw-radius-* by CustomStyles.astro). Map names here, never hardcode hex.
+ */
+@theme {
+  --color-teal: var(--aw-color-teal);
+  --color-teal-deep: var(--aw-color-teal-deep);
+  --color-teal-wash: var(--aw-color-teal-wash);
+  --color-sea: var(--aw-color-sea);
+  --color-sky: var(--aw-color-sky);
+  --color-leaf: var(--aw-color-leaf);
+  --color-sand: var(--aw-color-sand);
+  --color-sand-wash: var(--aw-color-sand-wash);
+  --color-ink: var(--aw-color-ink);
+  --color-muted: var(--aw-color-muted);
+  --color-line: var(--aw-color-line);
+  --color-tint: var(--aw-color-tint);
+  --color-white: var(--aw-color-white);
+  --color-scrim: var(--aw-color-scrim);
+
+  --radius-sm: var(--aw-radius-sm);
+  --radius-md: var(--aw-radius-md);
+  --radius-lg: var(--aw-radius-lg);
+  --radius-card: var(--aw-radius-card);
+  --radius-xl: var(--aw-radius-xl);
+  --radius-pill: var(--aw-radius-pill);
+
+  --font-serif: var(--font-gentium-plus), serif;
+  --font-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: 0 4px 24px color-mix(in srgb, var(--aw-color-ink) 10%, transparent);
+  --shadow-popover: 0 8px 24px 0 color-mix(in srgb, var(--aw-color-teal-deep) 18%, transparent);
+
+  --max-width-container: 1440px;
+}
+
+@layer base {
+  html {
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-white font-serif text-ink;
+  }
+
+  /* Kapa'a and other Hawaiian names keep the ʻokina and kahakō. Do not strip them. */
+  :lang(en) {
+    font-variant-ligatures: common-ligatures;
+  }
+}
+
+@utility site-frame {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1440px;
+  padding-inline: 1.25rem;
+  @media (width >= 64rem) {
+    padding-inline: 120px;
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+
+@utility font-ui {
+  font-family: var(--font-sans);
+  font-weight: 400;
+}
+
+@utility focus-ring {
+  @apply outline-none ring-2 ring-sky ring-offset-2 ring-offset-white;
+}

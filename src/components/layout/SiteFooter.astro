@@ -1,0 +1,55 @@
+---
+import Logo from '~/components/Logo.astro';
+import type { SiteSettings } from '~/lib/site';
+import footerVector from '~/assets/brand/footer-vector.svg';
+import { assetUrl } from '~/utils/assets';
+
+interface Props {
+  settings: SiteSettings;
+}
+
+const { settings } = Astro.props;
+const columns = settings.footerColumns ?? [];
+const official = settings.officialInfo;
+---
+
+<footer class="relative overflow-hidden bg-teal-deep text-white">
+  <img
+    src={assetUrl(footerVector)}
+    alt=""
+    aria-hidden="true"
+    class="pointer-events-none absolute top-[-79px] right-[-2%] h-[391px] w-[462px] mix-blend-overlay"
+  />
+
+  <div class="site-frame relative flex flex-col gap-14 py-16 lg:flex-row lg:gap-20">
+    <div class="flex w-full max-w-[360px] flex-col gap-4">
+      <Logo class="w-[136.8px]" label={settings.siteName} />
+      {settings.footerTagline && <p class="font-serif text-[20px] leading-[30px]">{settings.footerTagline}</p>}
+      {
+        official?.url && (
+          <p class="font-sans text-xs leading-4">
+            {official.label}{' '}
+            <a href={official.url} class="underline underline-offset-2">
+              {official.linkText ?? official.url}
+            </a>
+          </p>
+        )
+      }
+    </div>
+
+    <nav class="flex flex-1 flex-col gap-10 sm:flex-row sm:gap-16" aria-label="Footer">
+      {
+        columns.map((column) => (
+          <div class="flex flex-col gap-3">
+            <p class="font-display text-[13px] leading-4 tracking-[1.6px] text-sand uppercase">{column.title}</p>
+            {(column.links ?? []).map((link) => (
+              <a href={link.href} class="font-sans text-[14px] leading-5 font-semibold hover:underline">
+                {link.label}
+              </a>
+            ))}
+          </div>
+        ))
+      }
+    </nav>
+  </div>
+</footer>

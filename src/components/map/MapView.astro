@@ -1,0 +1,380 @@
+---
+/**
+ * Map view: filter toolbar, results list and a pannable, zoomable island map.
+ * Every label comes from the Sanity `mapPage` document and every place from the `business` documents.
+ * The server renders the toolbar, filter menus and region labels. The browser (src/scripts/map-explorer.ts)
+ * draws pins, rows and cards from the JSON below, and handles filtering, panning, zooming and selection.
+ * Desktop: list left, map right. Mobile: map first with a swipeable card row and a List button.
+ */
+import { getImage } from 'astro:assets';
+import type { MapPageContent } from '~/lib/map-page';
+import { MAP_VIEW_FRAME } from '~/lib/map';
+import { assetUrl } from '~/utils/assets';
+import placeholderPhoto from '~/assets/images/placeholder/business.jpg';
+import island from '~/assets/brand/island.svg';
+import dotOpen from '~/assets/brand/dot-open.svg';
+import dotClosed from '~/assets/brand/dot-closed.svg';
+import leaf from '~/assets/brand/leaf.svg';
+import pinOpen from '~/assets/map/pin-open.svg';
+import pinClosed from '~/assets/map/pin-closed.svg';
+import pinSelected from '~/assets/map/pin-selected.svg';
+import caretDown from '~/assets/icons/caret-down.svg';
+import listIcon from '~/assets/icons/list.svg';
+import mapIcon from '~/assets/icons/map-trifold.svg';
+import quotes from '~/assets/icons/quotes.svg';
+import plus from '~/assets/icons/plus.svg';
+import minus from '~/assets/icons/minus.svg';
+import arrowRight from '~/assets/icons/arrow-right.svg';
+
+interface Props {
+  page: MapPageContent;
+}
+
+const { page } = Astro.props;
+const { copy, items, types, areas, prices, regions, hasLocallyOwned } = page;
+const { width, height, island: islandBox } = MAP_VIEW_FRAME;
+
+const [rowPlaceholder, popoverPlaceholder, cardPlaceholder] = await Promise.all([
+  getImage({ src: placeholderPhoto, width: 296, height: 256, format: 'jpg' }),
+  getImage({ src: placeholderPhoto, width: 552, height: 240, format: 'jpg' }),
+  getImage({ src: placeholderPhoto, width: 600, height: 240, format: 'jpg' }),
+]);
+
+const filters = [
+  { key: 'type', label: copy.typeLabel, options: types },
+  { key: 'area', label: copy.areaLabel, options: areas },
+  { key: 'price', label: copy.priceLabel, options: prices },
+].filter((filter) => filter.label && filter.options.length > 0);
+
+const config = {
+  items,
+  frame: { width, height },
+  filters: Object.fromEntries(filters.map((filter) => [filter.key, filter.options])),
+  copy: {
+    resultsTemplate: copy.resultsTemplate ?? '',
+    knownForPrefix: copy.knownForPrefix ?? '',
+    listButtonLabel: copy.listButtonLabel ?? '',
+    mapButtonLabel: copy.mapButtonLabel ?? '',
+    locallyOwnedLabel: copy.locallyOwnedLabel ?? '',
+    localFranchiseLabel: copy.localFranchiseLabel ?? '',
+  },
+  assets: {
+    dotOpen: assetUrl(dotOpen),
+    dotClosed: assetUrl(dotClosed),
+    pinOpen: assetUrl(pinOpen),
+    pinClosed: assetUrl(pinClosed),
+    pinSelected: assetUrl(pinSelected),
+    listIcon: assetUrl(listIcon),
+    mapIcon: assetUrl(mapIcon),
+  },
+  placeholders: { row: rowPlaceholder.src, popover: popoverPlaceholder.src, card: cardPlaceholder.src },
+};
+
+/** JSON safe to embed in a script tag: scraped text can never close the tag. */
+const configJson = JSON.stringify(config)
+  .replace(/</g, '\\u003c')
+  .replace(/\u2028/g, '\\u2028')
+  .replace(/\u2029/g, '\\u2029');
+
+const eyebrow = [copy.eyebrow, [items.length, copy.countNoun].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+
+const chip =
+  'inline-flex shrink-0 items-center gap-1.5 rounded-pill border border-line bg-white px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-ink transition-colors hover:border-teal focus-visible:outline-2 focus-visible:outline-sky data-[active=true]:border-teal data-[active=true]:bg-teal-wash data-[active=true]:text-teal-deep';
+const pill = 'rounded-pill bg-tint px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-ink';
+const tag =
+  'items-center gap-1.5 rounded-pill bg-sand-wash px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-leaf';
+const showToggle = Boolean(copy.listToggleHref && copy.listToggleLabel && copy.mapToggleLabel);
+---
+
+<div data-map-root class="flex min-h-0 flex-1 flex-col bg-white">
+  <script type="application/json" data-map-config set:html={configJson} is:inline />
+
+  <div
+    class="flex flex-col gap-3 border-y border-line bg-white px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-8 lg:py-[22px]"
+  >
+    <div class="flex shrink-0 flex-col">
+      {eyebrow && <p class="font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">{eyebrow}</p>}
+      <h1 class="font-display text-xl leading-[26px] text-teal-deep lg:text-2xl lg:leading-[30px]">{copy.title}</h1>
+    </div>
+
+    <div
+      class="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 lg:flex-wrap lg:overflow-visible lg:pb-0"
+      data-filters
+    >
+      {
+        copy.openNowLabel && (
+          <button type="button" data-toggle="open" aria-pressed="false" data-active="false" class={chip}>
+            <img src={assetUrl(dotOpen)} alt="" class="size-2" />
+            {copy.openNowLabel}
+          </button>
+        )
+      }
+      {
+        hasLocallyOwned && copy.locallyOwnedLabel && (
+          <button type="button" data-toggle="owned" aria-pressed="false" data-active="false" class={chip}>
+            <img src={assetUrl(leaf)} alt="" class="size-3.5" />
+            {copy.locallyOwnedLabel}
+          </button>
+        )
+      }
+      {
+        filters.map((filter) => (
+          <div data-filter={filter.key} class="shrink-0">
+            <button
+              type="button"
+              data-filter-button
+              data-default-label={filter.label}
+              data-active="false"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              class={chip}
+            >
+              <span data-filter-label>{filter.label}</span>
+              <img src={assetUrl(caretDown)} alt="" class="size-3.5" />
+            </button>
+            <div
+              role="listbox"
+              data-filter-menu
+              hidden
+              class="fixed z-40 max-h-80 min-w-48 overflow-y-auto rounded-md border border-line bg-white p-1.5 shadow-popover"
+            >
+              <button
+                type="button"
+                role="option"
+                data-value=""
+                aria-selected="true"
+                class="block w-full rounded-sm px-3 py-2 text-left font-sans text-[13px] leading-[18px] font-semibold text-ink hover:bg-tint aria-selected:bg-teal-wash aria-selected:text-teal-deep"
+              >
+                {copy.anyLabel ?? filter.label}
+              </button>
+              {filter.options.map((option) => (
+                <button
+                  type="button"
+                  role="option"
+                  data-value={option.id}
+                  data-slug={option.slug}
+                  aria-selected="false"
+                  class="block w-full rounded-sm px-3 py-2 text-left font-sans text-[13px] leading-[18px] font-semibold text-ink hover:bg-tint aria-selected:bg-teal-wash aria-selected:text-teal-deep"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    {
+      showToggle && (
+        <div class="hidden shrink-0 gap-1 rounded-pill bg-tint p-1 lg:flex">
+          <a
+            href={copy.listToggleHref}
+            class="flex items-center gap-2 rounded-pill px-[18px] py-[9px] font-sans text-[13px] leading-[18px] font-semibold text-muted hover:text-ink"
+          >
+            <img src={assetUrl(listIcon)} alt="" class="size-3.5" />
+            {copy.listToggleLabel}
+          </a>
+          <span
+            aria-current="page"
+            class="flex items-center gap-2 rounded-pill bg-white px-[18px] py-[9px] font-sans text-[13px] leading-[18px] font-semibold text-ink shadow-[0_2px_6px_rgba(0,51,77,0.14)]"
+          >
+            <img src={assetUrl(mapIcon)} alt="" class="size-3.5" />
+            {copy.mapToggleLabel}
+          </span>
+        </div>
+      )
+    }
+  </div>
+
+  <div class="relative flex min-h-0 flex-1">
+    <section
+      data-list-panel
+      aria-label={copy.title}
+      class="flex min-h-0 w-full flex-col bg-white max-lg:absolute max-lg:inset-0 max-lg:z-20 max-lg:hidden lg:w-[560px] lg:shrink-0"
+    >
+      <p data-results-label class="shrink-0 px-4 pt-5 pb-3 font-sans text-xs leading-4 text-muted lg:px-8 lg:pt-7"></p>
+      <ul data-list class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pb-24 lg:px-8 lg:pb-6"></ul>
+      <div data-empty hidden class="px-4 py-10 lg:px-8">
+        {copy.emptyTitle && <p class="font-display text-[21px] leading-[26px] text-ink">{copy.emptyTitle}</p>}
+        {copy.emptyBody && <p class="mt-2 font-serif text-[17px] leading-[26px] text-muted">{copy.emptyBody}</p>}
+      </div>
+    </section>
+
+    <div data-viewport class="relative min-w-0 flex-1 touch-none overflow-hidden bg-sea select-none">
+      <div data-layer class="absolute top-0 left-0 origin-top-left" style={`width:${width}px;height:${height}px;`}>
+        <img
+          src={assetUrl(island)}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          class="pointer-events-none absolute max-w-none"
+          style={`left:${islandBox.x}px;top:${islandBox.y}px;width:${islandBox.width}px;height:${islandBox.height}px;`}
+        />
+        {
+          regions.map((region) => (
+            <span class="pointer-events-none absolute size-0" style={`left:${region.x}px;top:${region.y}px;`}>
+              <span
+                class="absolute font-display text-[13px] leading-4 tracking-[1.6px] whitespace-nowrap text-teal-deep uppercase"
+                style="transform: translate(-50%, -50%) scale(calc(1 / var(--s, 1)));"
+              >
+                {region.text}
+              </span>
+            </span>
+          ))
+        }
+        <div data-pins></div>
+      </div>
+
+      <div
+        class="absolute top-4 right-4 z-10 flex flex-col gap-0.5 rounded-md bg-white p-1 shadow-[0_2px_8px_rgba(0,51,77,0.15)] lg:top-6 lg:right-6"
+      >
+        <button
+          type="button"
+          data-zoom="in"
+          aria-label={copy.zoomInLabel}
+          class="flex rounded-sm p-2.5 hover:bg-tint lg:p-2.5"
+        >
+          <img src={assetUrl(plus)} alt="" class="size-[18px]" />
+        </button>
+        <button
+          type="button"
+          data-zoom="out"
+          aria-label={copy.zoomOutLabel}
+          class="flex rounded-sm p-2.5 hover:bg-tint"
+        >
+          <img src={assetUrl(minus)} alt="" class="size-[18px]" />
+        </button>
+      </div>
+
+      <div
+        data-popover
+        hidden
+        class="absolute top-0 left-0 z-10 w-[300px] flex-col gap-2.5 rounded-lg bg-white p-3 shadow-[0_10px_28px_rgba(0,51,77,0.2)] max-lg:hidden! lg:flex"
+      >
+        <img data-slot="photo" alt="" class="h-[120px] w-full rounded-md object-cover" />
+        <p data-slot="name" class="font-display text-[21px] leading-[26px] text-ink"></p>
+        <p data-slot="meta" class="font-sans text-xs leading-4 text-muted"></p>
+        <div class="flex flex-wrap gap-2">
+          <span class={`flex items-center gap-1.5 ${pill}`}>
+            <img data-slot="dot" alt="" class="size-2" />
+            <span data-slot="status"></span>
+          </span>
+          <span data-slot="owner" hidden class={`flex ${tag}`}>
+            <img data-slot="owner-icon" src={assetUrl(leaf)} alt="" class="size-3.5" />
+            <span data-slot="owner-text"></span>
+          </span>
+        </div>
+        <a
+          data-slot="link"
+          class="flex items-center justify-center gap-2 rounded-pill bg-teal py-2.5 font-sans text-sm leading-5 font-semibold text-white hover:bg-teal-deep"
+        >
+          {copy.viewListingLabel}
+          <img src={assetUrl(arrowRight)} alt="" class="size-4 brightness-0 invert" />
+        </a>
+      </div>
+    </div>
+
+    <div class="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex flex-col items-center gap-3 lg:hidden">
+      {
+        copy.listButtonLabel && copy.mapButtonLabel && (
+          <button
+            type="button"
+            data-view-toggle
+            class="pointer-events-auto flex items-center gap-2 rounded-pill bg-ink px-[18px] py-3 font-sans text-sm leading-5 font-semibold text-white shadow-[0_8px_24px_rgba(0,51,77,0.2)]"
+          >
+            <img src={assetUrl(listIcon)} alt="" data-view-icon class="size-4 brightness-0 invert" />
+            <span data-view-label>{copy.listButtonLabel}</span>
+          </button>
+        )
+      }
+      <ul
+        data-carousel
+        class="pointer-events-auto flex w-full snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-4 px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+      </ul>
+    </div>
+  </div>
+
+  <template data-template="row">
+    <li>
+      <button
+        type="button"
+        data-row
+        aria-pressed="false"
+        class="flex w-full items-center gap-4 rounded-lg border border-line bg-white p-3 text-left transition-shadow hover:shadow-card focus-visible:outline-2 focus-visible:outline-sky aria-pressed:border-teal aria-pressed:shadow-[0_6px_18px_rgba(0,51,77,0.14)] aria-pressed:ring-1 aria-pressed:ring-teal"
+      >
+        <img
+          data-slot="photo"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          class="h-28 w-[112px] shrink-0 rounded-md object-cover sm:h-32 sm:w-[148px]"
+        />
+        <span class="flex min-w-0 flex-1 flex-col items-start gap-1.5">
+          <span data-slot="name" class="font-display text-[21px] leading-[26px] text-ink"></span>
+          <span data-slot="meta" class="font-sans text-xs leading-4 text-muted"></span>
+          <span class="flex flex-wrap gap-x-3 gap-y-1.5">
+            <span class={`flex items-center gap-1.5 ${pill}`}>
+              <img data-slot="dot" alt="" class="size-2" />
+              <span data-slot="status"></span>
+            </span>
+            <span data-slot="owner" hidden class={`flex ${tag}`}>
+              <img data-slot="owner-icon" src={assetUrl(leaf)} alt="" class="size-3.5" />
+              <span data-slot="owner-text"></span>
+            </span>
+          </span>
+          <span data-slot="known" hidden class="flex items-start gap-1.5">
+            <img src={assetUrl(quotes)} alt="" class="mt-1.5 size-4 shrink-0" />
+            <span data-slot="known-text" class="font-serif text-[17px] leading-[26px] text-ink italic"></span>
+          </span>
+        </span>
+      </button>
+    </li>
+  </template>
+
+  <template data-template="card">
+    <li class="shrink-0 snap-start">
+      <button
+        type="button"
+        data-card
+        aria-pressed="false"
+        class="block w-[300px] overflow-hidden rounded-card border border-line bg-white text-left shadow-[0_6px_18px_rgba(0,51,77,0.14)] aria-pressed:border-teal aria-pressed:ring-1 aria-pressed:ring-teal"
+      >
+        <span class="relative block">
+          <img data-slot="photo" alt="" loading="lazy" decoding="async" class="h-[120px] w-full object-cover" />
+          <span
+            class="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-pill bg-white px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold text-ink"
+          >
+            <img data-slot="dot" alt="" class="size-2" />
+            <span data-slot="status"></span>
+          </span>
+        </span>
+        <span class="flex flex-col gap-1 px-3.5 pt-3 pb-3.5">
+          <span data-slot="name" class="font-display text-[21px] leading-[26px] text-ink"></span>
+          <span data-slot="meta" class="font-sans text-xs leading-4 text-muted"></span>
+          <span data-slot="known-text" class="font-serif text-[17px] leading-[26px] text-ink italic"></span>
+        </span>
+      </button>
+    </li>
+  </template>
+
+  <template data-template="pin">
+    <button
+      type="button"
+      data-pin
+      class="absolute size-0 p-0 focus-visible:[&>img]:rounded-full focus-visible:[&>img]:outline-2 focus-visible:[&>img]:outline-sky"
+    >
+      <img alt="" draggable="false" class="absolute max-w-none" style="transform: scale(calc(1 / var(--s, 1)));" />
+    </button>
+  </template>
+</div>
+
+<script>
+  import { initMapExplorer } from '~/scripts/map-explorer';
+
+  document.querySelectorAll<HTMLElement>('[data-map-root]').forEach((root) => initMapExplorer(root));
+
+  // The listings are drawn: take the loader away.
+  window.requestAnimationFrame(() => document.querySelector('[data-map-loader]')?.remove());
+</script>

@@ -1,0 +1,19 @@
+---
+/** /region/<slug>/. An unknown slug is a 404. Rendered per request so "Open now" is current. */
+import PageLayout from '~/layouts/PageLayout.astro';
+import RegionDetail from '~/components/pages/RegionDetail.astro';
+import { loadRegionPage } from '~/lib/region-page';
+import { getSiteSettings } from '~/lib/site';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.rewrite('/404');
+
+const [page, settings] = await Promise.all([loadRegionPage(slug), getSiteSettings()]);
+if (!page) return Astro.rewrite('/404');
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+---
+
+<PageLayout metadata={{ title: page.seo.title, description: page.seo.description }}>
+  <RegionDetail page={page} labels={settings.listingLabels} />
+</PageLayout>

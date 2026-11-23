@@ -1,0 +1,29 @@
+---
+/**
+ * A native <select> with the site's chevron instead of the browser's arrow. Keeps the native
+ * picker (best on phones and for screen readers); only the arrow is drawn here.
+ */
+import { assetUrl } from '~/utils/assets';
+import caretDown from '~/assets/icons/caret-down.svg';
+
+interface Props {
+  name: string;
+  required?: boolean;
+  /** Classes for the select itself (border, padding, type). */
+  class?: string;
+}
+
+const { name, required = false, class: className } = Astro.props;
+---
+
+<div class="relative">
+  <select name={name} required={required} class:list={['appearance-none pr-12', className]}>
+    <slot />
+  </select>
+  <img
+    src={assetUrl(caretDown)}
+    alt=""
+    aria-hidden="true"
+    class="pointer-events-none absolute top-1/2 right-5 size-3.5 -translate-y-1/2"
+  />
+</div>

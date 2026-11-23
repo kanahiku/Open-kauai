@@ -1,0 +1,134 @@
+---
+/**
+ * One region: title band, its towns, a map of its listings and a shelf per section.
+ * Everything comes from Sanity; blocks with nothing to show are left out.
+ */
+import PageHero from '~/components/common/PageHero.astro';
+import ListingShelf from '~/components/home/ListingShelf.astro';
+import { assetUrl } from '~/utils/assets';
+import { MAP_FRAME } from '~/lib/map';
+import type { RegionPageContent } from '~/lib/region-page';
+import type { ListingLabels } from '~/lib/site';
+import island from '~/assets/brand/island.svg';
+import pin from '~/assets/brand/pin.svg';
+import arrowRight from '~/assets/icons/arrow-right-cta.svg';
+
+interface Props {
+  page: RegionPageContent;
+  labels?: ListingLabels;
+}
+
+const { page, labels } = Astro.props;
+const { copy, map } = page;
+const { view } = map;
+const { island: islandBox } = MAP_FRAME;
+const pct = (value: number, total: number) => `${((value / total) * 100).toFixed(4)}%`;
+const lede = [page.tagline, page.description].filter(Boolean).join(' ');
+---
+
+<PageHero eyebrow={copy.eyebrow} title={page.title} lede={lede} />
+
+{
+  page.shelves.length === 0 ? (
+    <section class="site-frame flex flex-col items-center gap-2 py-20 text-center">
+      {copy.emptyTitle && <h2 class="font-display text-[28px] leading-10 text-teal-deep">{copy.emptyTitle}</h2>}
+      {copy.emptyBody && <p class="max-w-[520px] font-serif text-lg leading-7 text-muted">{copy.emptyBody}</p>}
+      <a href="/map/" class="mt-3 font-sans text-sm font-semibold text-teal hover:underline">
+        {copy.mapLinkLabel}
+      </a>
+    </section>
+  ) : (
+    <>
+      <section class="site-frame grid items-start gap-8 py-10 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-14 lg:py-[72px]">
+        <div class="flex flex-col gap-4">
+          {copy.townsTitle && <h2 class="font-display text-[28px] leading-10 text-teal-deep">{copy.townsTitle}</h2>}
+          <ul class="flex flex-wrap gap-2.5">
+            {page.towns.map((town) => (
+              <li>
+                <a
+                  href={`/map/?area=${encodeURIComponent(town.slug)}`}
+                  class="flex items-center gap-2 rounded-pill border border-line bg-white px-3.5 py-2 font-sans text-sm leading-5 font-semibold text-ink transition-colors hover:border-teal hover:text-teal-deep"
+                >
+                  {town.title}
+                  <span class="font-normal text-muted">{town.count}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          {copy.mapLinkLabel && (
+            <a
+              href="/map/"
+              class="mt-2 inline-flex w-fit items-center gap-2 rounded-pill bg-teal px-6 py-3.5 font-sans text-sm font-semibold text-white hover:bg-teal-deep"
+            >
+              {copy.mapLinkLabel}
+              <img src={assetUrl(arrowRight)} alt="" class="size-[18px]" />
+            </a>
+          )}
+        </div>
+
+        <div
+          class="relative w-full overflow-hidden rounded-card bg-sea"
+          style={`aspect-ratio: ${map.width} / ${map.height};`}
+          role="img"
+          aria-label={copy.mapTitle ?? page.title}
+        >
+          <div
+            class="absolute inset-0 origin-top-left"
+            style={`transform:scale(${view.scale.toFixed(3)}) translate(${(50 / view.scale - view.cx * 100).toFixed(3)}%, ${(50 / view.scale - view.cy * 100).toFixed(3)}%);`}
+          >
+            <img
+              src={assetUrl(island)}
+              alt=""
+              aria-hidden="true"
+              class="absolute opacity-50"
+              style={`left:${pct(islandBox.x, map.width)};top:${pct(islandBox.y, map.height)};width:${pct(islandBox.width, map.width)};height:${pct(islandBox.height, map.height)};`}
+            />
+            {map.pins.map((p) => (
+              <img
+                src={assetUrl(pin)}
+                alt=""
+                aria-hidden="true"
+                class="absolute"
+                style={`left:${pct(p.x + p.size / 2 - p.size / view.scale / 2, map.width)};top:${pct(p.y + p.size / 2 - p.size / view.scale / 2, map.height)};width:${pct(p.size / view.scale, map.width)};`}
+              />
+            ))}
+            {map.labels.map((label) => (
+              <span
+                class="absolute origin-bottom rounded-pill bg-white/85 px-2 py-0.5 font-display text-[11px] leading-4 tracking-[1.2px] whitespace-nowrap text-teal-deep uppercase"
+                style={`left:${pct(label.x, map.width)};top:${pct(label.y, map.height)};transform:translate(-50%, -170%) scale(${(1 / view.scale).toFixed(3)});`}
+              >
+                {label.text}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {page.shelves.map((shelf, index) => (
+        <ListingShelf shelf={shelf} seeAllLabel={copy.seeAllLabel} first={index === 0} labels={labels} />
+      ))}
+    </>
+  )
+}
+
+{
+  page.others.length > 0 && (
+    <section class="site-frame flex flex-col gap-4 py-14">
+      {copy.otherRegionsTitle && (
+        <h2 class="font-display text-[24px] leading-[30px] text-teal-deep">{copy.otherRegionsTitle}</h2>
+      )}
+      <ul class="flex flex-wrap gap-2.5">
+        {page.others.map((other) => (
+          <li>
+            <a
+              href={other.href}
+              class="rounded-pill border border-line bg-white px-4 py-2 font-sans text-sm leading-5 font-semibold text-ink hover:border-teal hover:text-teal-deep"
+            >
+              {other.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}

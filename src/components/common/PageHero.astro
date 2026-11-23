@@ -1,0 +1,47 @@
+---
+/**
+ * Title band for the supporting pages (About, Owners, For businesses, Regions): a teal gradient with
+ * the kapa niho pattern down the left edge, an eyebrow, a title and an intro. Anything in the
+ * `aside` slot sits to the right on large screens.
+ */
+import { assetUrl } from '~/utils/assets';
+import kapaBand from '~/assets/brand/kapa-band.svg';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lede?: string;
+  /** Extra line under the intro, e.g. a breadcrumb or a count. */
+  class?: string;
+}
+
+const { eyebrow, title, lede, class: className = '' } = Astro.props;
+const hasAside = Astro.slots.has('aside');
+---
+
+<section
+  class:list={['relative isolate overflow-hidden bg-gradient-to-r from-teal to-teal-deep text-white', className]}
+>
+  <img
+    src={assetUrl(kapaBand)}
+    alt=""
+    aria-hidden="true"
+    class="pointer-events-none absolute top-0 left-0 -z-10 hidden h-[36px] w-[1440px] max-w-none origin-top-left translate-x-[36px] rotate-90 opacity-30 mix-blend-overlay lg:block"
+  />
+  <div class:list={['site-frame flex flex-col gap-10 py-14 lg:py-[72px]', hasAside && 'lg:flex-row lg:items-center']}>
+    <div class="flex max-w-[680px] flex-col gap-3">
+      {eyebrow && <p class="font-display text-[13px] leading-4 tracking-[1.6px] text-sand uppercase">{eyebrow}</p>}
+      <h1 class="font-display text-[38px] leading-[44px] tracking-[-0.5px] lg:text-[52px] lg:leading-[56px]">
+        {title}
+      </h1>
+      {lede && <p class="font-serif text-lg leading-[28px] lg:text-[20px] lg:leading-[30px]">{lede}</p>}
+    </div>
+    {
+      hasAside && (
+        <div class="lg:ml-auto">
+          <slot name="aside" />
+        </div>
+      )
+    }
+  </div>
+</section>

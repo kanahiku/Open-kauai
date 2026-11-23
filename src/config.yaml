@@ -1,0 +1,39 @@
+# Framework plumbing (i18n, blog flags, UI). Site identity is NOT here.
+# Name, description, navigation and page copy live in Sanity. Edit src/config/site.ts for URL, GTM, and Search Console.
+
+site:
+  site: 'https://www.openkauai.org'
+  base: '/'
+  trailingSlash: true
+  googleSiteVerificationId: ''
+
+# Default SEO metadata
+metadata:
+  robots:
+    index: true
+    follow: true
+  openGraph:
+    images: []
+    type: website
+  twitter:
+    handle: ''
+    site: ''
+    cardType: summary_large_image
+
+i18n:
+  language: en
+  textDirection: ltr
+
+apps:
+  blog:
+    isEnabled: false
+
+analytics:
+  vendors:
+    googleTagManager:
+      id: ''
+    googleAnalytics:
+      id: null
+
+ui:
+  theme: 'light'

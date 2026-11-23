@@ -1,0 +1,79 @@
+---
+/** /about/. Copy from the `aboutPage` document. */
+import PageLayout from '~/layouts/PageLayout.astro';
+import PageHero from '~/components/common/PageHero.astro';
+import { loadAboutPage } from '~/lib/info-pages';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const page = await loadAboutPage();
+
+const tonePill: Record<string, string> = {
+  local: 'border-leaf/20 bg-leaf/10 text-leaf',
+  franchise: 'border-sand/40 bg-sand-wash text-ink',
+  plain: 'border-line bg-white text-muted',
+};
+---
+
+<PageLayout metadata={{ title: page.seo.title, description: page.seo.description }}>
+  <PageHero eyebrow={page.eyebrow} title={page.title} lede={page.lede} />
+
+  <div class="site-frame flex flex-col gap-10 py-12 lg:flex-row lg:gap-[56px] lg:py-[72px]">
+    {
+      page.sections.length > 1 && (
+        <nav aria-label={page.tocTitle ?? 'Sections'} class="shrink-0 lg:sticky lg:top-8 lg:w-[260px] lg:self-start">
+          {page.tocTitle && (
+            <p class="mb-3 font-display text-[13px] leading-4 tracking-[1.6px] text-teal uppercase">{page.tocTitle}</p>
+          )}
+          <ul class="flex flex-col gap-2.5">
+            {page.sections.map((section) => (
+              <li>
+                <a
+                  href={`#${section.id}`}
+                  class="font-serif text-[17px] leading-[26px] text-teal hover:text-teal-deep hover:underline"
+                >
+                  {section.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    <div class="flex min-w-0 max-w-[800px] flex-1 flex-col gap-10">
+      {
+        page.sections.map((section) => (
+          <section id={section.id} class="flex scroll-mt-8 flex-col gap-3.5" aria-labelledby={`${section.id}-title`}>
+            <h2 id={`${section.id}-title`} class="font-display text-[28px] leading-10 text-teal-deep">
+              {section.title}
+            </h2>
+            {section.paragraphs.map((paragraph) => (
+              <p class="font-serif text-[18px] leading-[30px] text-ink">{paragraph}</p>
+            ))}
+            {section.labels.length > 0 && (
+              <ul class="mt-1 flex flex-col gap-2.5">
+                {section.labels.map((label) => (
+                  <li class="flex flex-col gap-2 rounded-card bg-tint px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4">
+                    <span
+                      class:list={[
+                        'w-fit shrink-0 rounded-pill border px-2.5 py-[5px] font-sans text-[13px] leading-[18px] font-semibold',
+                        tonePill[label.tone],
+                      ]}
+                    >
+                      {label.label}
+                    </span>
+                    {label.description && (
+                      <span class="font-serif text-[18px] leading-[26px] text-ink">{label.description}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {section.note && <p class="font-sans text-[13px] leading-5 text-muted">{section.note}</p>}
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</PageLayout>

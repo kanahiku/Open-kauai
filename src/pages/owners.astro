@@ -1,0 +1,63 @@
+---
+/** /owners/. Copy from the `ownersPage` document and the stories from `ownerStory` documents. */
+import PageLayout from '~/layouts/PageLayout.astro';
+import PageHero from '~/components/common/PageHero.astro';
+import Image from '~/components/common/Image.astro';
+import { assetUrl } from '~/utils/assets';
+import { loadOwnersPage } from '~/lib/info-pages';
+import quotes from '~/assets/icons/quotes.svg';
+import arrowRight from '~/assets/icons/arrow-right.svg';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const page = await loadOwnersPage();
+---
+
+<PageLayout metadata={{ title: page.seo.title, description: page.seo.description }}>
+  <PageHero eyebrow={page.eyebrow} title={page.title} lede={page.lede} />
+
+  <section class="site-frame py-12 lg:py-[72px]">
+    {
+      page.stories.length > 0 ? (
+        <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {page.stories.map((story) => (
+            <li class="flex flex-col overflow-hidden rounded-card border border-line bg-white shadow-card">
+              {story.photo ? (
+                <Image src={story.photo} alt="" layout="none" class="h-[188px] w-full object-cover" />
+              ) : (
+                <div class="h-[88px] bg-tint" aria-hidden="true" />
+              )}
+              <div class="relative flex flex-1 flex-col gap-4 px-6 pt-9 pb-6">
+                <span
+                  class="absolute -top-[18px] left-5 flex size-9 items-center justify-center rounded-pill bg-teal-deep ring-4 ring-white"
+                  aria-hidden="true"
+                >
+                  <img src={assetUrl(quotes)} alt="" class="size-[18px] brightness-0 invert" />
+                </span>
+                <blockquote class="font-display text-[22px] leading-7 text-teal-deep">{story.quote}</blockquote>
+                <div class="mt-auto flex flex-col gap-1">
+                  <p class="font-serif text-[18px] leading-6 font-bold text-ink">{story.ownerName}</p>
+                  {story.line && <p class="font-sans text-xs leading-4 text-muted">{story.line}</p>}
+                  {story.href && page.viewListingLabel && (
+                    <a
+                      href={story.href}
+                      class="mt-2 inline-flex w-fit items-center gap-1.5 font-sans text-sm leading-5 font-semibold text-teal hover:underline"
+                    >
+                      {page.viewListingLabel}
+                      <img src={assetUrl(arrowRight)} alt="" class="size-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="mx-auto flex max-w-[560px] flex-col items-center gap-2 py-12 text-center">
+          {page.emptyTitle && <h2 class="font-display text-[28px] leading-10 text-teal-deep">{page.emptyTitle}</h2>}
+          {page.emptyBody && <p class="font-serif text-lg leading-7 text-muted">{page.emptyBody}</p>}
+        </div>
+      )
+    }
+  </section>
+</PageLayout>
